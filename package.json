@@ -2,10 +2,13 @@
   "name": "failsafe",
   "version": "1.0.0",
   "description": "fetch fixture data",
-  "main": "index.js",
+  "main": "failsafe.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Jacob Moeller",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^2.8.0"
+  }
 }
