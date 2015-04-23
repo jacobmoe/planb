@@ -1,8 +1,8 @@
 {
-  "name": "api-fallback",
+  "name": "planb",
   "version": "1.0.0",
   "description": "fetch fixture data",
-  "main": "failsafe.js",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
