@@ -1,5 +1,5 @@
 {
-  "name": "failsafe",
+  "name": "api-fallback",
   "version": "1.0.0",
   "description": "fetch fixture data",
   "main": "failsafe.js",
