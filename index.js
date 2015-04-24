@@ -3,6 +3,12 @@
 var program = require('commander')
 
 program
-  .command('project')
-  .description('project')
-  .action(require('./lib/project'))
+  .command('add [url]')
+  .description('add')
+  .action(require('./lib/add'))
+
+program.parse(process.argv)
+
+if (!process.argv.slice(2).length) {
+  program.outputHelp()
+}
