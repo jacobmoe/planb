@@ -1,22 +1,28 @@
 #!/usr/bin/env node
 
 var program = require('commander')
-var endpoints = require('./lib/endpoints')
+var manager = require('./lib/manager')
+var server = require('./lib/server')
 
 program
   .command('add [url]')
   .description('add')
-  .action(endpoints.add)
+  .action(manager.add)
 
 program
   .command('list')
   .description('list')
-  .action(endpoints.list)
+  .action(manager.list)
 
 program
   .command('fetch')
   .description('fetch')
-  .action(endpoints.fetch)
+  .action(manager.fetch)
+
+program
+  .command('serve')
+  .description('serve')
+  .action(server)
 
 program.parse(process.argv)
 
