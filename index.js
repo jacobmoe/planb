@@ -6,22 +6,22 @@ var server = require('./lib/server')
 
 program
   .command('add [url]')
-  .description('add')
+  .description('Add a new endpoint')
   .action(manager.add)
 
 program
   .command('list')
-  .description('list')
+  .description('List all endpoint versions')
   .action(manager.list)
 
 program
   .command('fetch')
-  .description('fetch')
+  .description('Fetch and store a new version for each endpoint')
   .action(manager.fetch)
 
 program
   .command('serve')
-  .description('serve')
+  .description('Serve local versions')
   .action(server)
 
 program.parse(process.argv)
