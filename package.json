@@ -1,11 +1,21 @@
 {
   "name": "planb",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "serve essential api data locally when the api is down",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jacobmoe/planb.git"
+  },
+  "keywords": [
+    "api",
+    "server",
+    "backup",
+    "development"
+  ],
   "author": "Jacob Moeller",
   "license": "ISC",
   "dependencies": {

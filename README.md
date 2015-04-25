@@ -6,19 +6,17 @@ API developers are the worst. They break things when you're in the middle of add
 
 You could add fixture data, but during development it's likely to go stale, and you still have to serve it.
 
-Planb is makes it easy to fetch fresh API data when the API is up and serve it when it's down.
+Planb makes it easy to fetch fresh API data when the API is up and serve it when it's down.
 
 ## Install
 
 ``` bash
 $ npm install -g planb
-
 ```
 
 ## Usage
 
 ``` bash
-
 $ planb add http://reddit.com/r/node.json
 
 $ planb fetch
@@ -26,5 +24,4 @@ $ planb fetch
 $ planb list
 
 $ planb serve
-
 ```
