@@ -20,6 +20,16 @@ program
   .action(manager.fetch)
 
 program
+  .command('rollback [endpoint]')
+  .description("Rollback the endpoint's current version")
+  .action(manager.rollback)
+
+program
+  .command('remove [endpoint]')
+  .description("Remove the endpoint and all its versions")
+  .action(manager.remove)
+
+program
   .command('serve')
   .description('Serve local versions')
   .action(server)
