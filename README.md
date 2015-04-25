@@ -42,4 +42,4 @@ $ planb
     -h, --help  output usage information
 ```
 
-After running `planb serve`, swap any reference to the API domain (in the above example, `http://reddit.com`) with `localhost:5555`.
+After running `planb serve`, swap any reference to the API domain (in the above example, `reddit.com`) with `localhost:5555`.
