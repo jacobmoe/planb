@@ -1,7 +1,7 @@
 {
   "name": "planb",
   "version": "0.0.3",
-  "description": "Serve essential api data locally when the api is down",
+  "description": "Serve essential API data locally when the API is down",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
