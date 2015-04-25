@@ -9,6 +9,8 @@
   "author": "Jacob Moeller",
   "license": "ISC",
   "dependencies": {
+    "ascii-table": "0.0.8",
+    "async": "^0.9.0",
     "commander": "^2.8.0"
   }
 }
