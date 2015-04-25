@@ -21,7 +21,17 @@ $ planb add http://reddit.com/r/node.json
 
 $ planb fetch
 
+$ planb list
+
+.---------------------------------------------.
+|   |       www.reddit.com/r/node.json        |
+|---|-----------------------------------------|
+| 0 | Sat Apr 25 2015 10:52:48 GMT-0400 (EDT) |
+'---------------------------------------------'
+
 $ planb serve
+
+Listening on port 5555
 
 $ planb
 
