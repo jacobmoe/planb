@@ -4,7 +4,7 @@
   "description": "Serve essential API data locally when the API is down",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node_modules/.bin/mocha"
   },
   "bin": {
     "planb": "./index.js"
@@ -27,6 +27,13 @@
     "commander": "^2.8.0",
     "express": "^4.12.3",
     "prompt": "^0.2.14",
-    "request": "^2.55.0"
+    "request": "^2.55.0",
+    "rimraf": "^2.3.2"
+  },
+  "devDependencies": {
+    "chai": "^2.2.0",
+    "mocha": "^2.2.4",
+    "nock": "^1.7.0",
+    "test-console": "^0.7.1"
   }
 }

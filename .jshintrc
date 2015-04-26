@@ -4,6 +4,7 @@
   "undef": true,     // warn if variable is not explicitly defined
   "globals": {       // exclude these globals from undef warnings
     "__dirname": true,
+    "global": true,
     "process": true,
     "require": true,
     "module": true,
@@ -11,6 +12,8 @@
     "describe": true,
     "it": true,
     "assert": true,
+    "assertFileExists": true,
+    "cleanup": true,
     "before": true,
     "beforeEach": true,
     "after": true,
