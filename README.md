@@ -54,4 +54,6 @@ $ planb
     -h, --help  output usage information
 ```
 
-After `planb serve`, swap references to the API domain (in the above example, `reddit.com`) with `localhost:5555`.
+After `planb serve`, swap references to the API domain with `localhost:5555`.
+
+In the above example, data will be available at `localhost:5555/r/node.json`.

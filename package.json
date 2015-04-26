@@ -1,6 +1,6 @@
 {
   "name": "planb",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Serve essential API data locally when the API is down",
   "main": "index.js",
   "scripts": {
