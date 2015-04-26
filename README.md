@@ -17,7 +17,7 @@ $ npm install -g planb
 ## Usage
 
 ``` bash
-$ planb add http://reddit.com/r/node.json
+$ planb add "http://reddit.com/r/node.json"
 
 $ planb fetch
 
@@ -57,3 +57,13 @@ $ planb
 After `planb serve`, swap references to the API domain with `localhost:5555`.
 
 In the above example, data will be available at `localhost:5555/r/node.json`.
+
+### Notes
+- Exact query strings must be used. Order matters. So, `example.com/api?type=test&other=param` will not be the same endpoint as  `example.com/api?other=param&type=test`
+- Two endpoints with identical paths + query strings will conflict. `example.com/api/stuff` will interfere with `test.com/api/stuff`.
+
+## Tests
+
+```bash
+$ npm test
+```
