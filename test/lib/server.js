@@ -36,11 +36,19 @@ describe('server', function(){
     var endpoint1 = 'http://www.test.com/api/other'
 
     beforeEach(function (done) {
-      manager.add(endpoint0, done)
+      var inspect = stdout.inspect()
+      manager.add(endpoint0, function() {
+        inspect.restore()
+        done()
+      })
     })
 
     beforeEach(function (done) {
-      manager.add(endpoint1, done)
+      var inspect = stdout.inspect()
+      manager.add(endpoint1, function() {
+        inspect.restore()
+        done()
+      })
     })
 
     beforeEach(function (done) {

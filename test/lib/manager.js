@@ -10,15 +10,24 @@ describe('manager', function() {
 
   describe('add', function() {
     it('creates a data directory, if not present', function(done) {
+      var inspect = stdout.inspect()
+
       manager.add('http://www.test.com/api/path', function(err) {
+        inspect.restore()
+
         assert.fileExists(utils.dataPath)
+        assert.deepEqual(inspect.output, ['endpoint added\n'])
         done()
       })
     })
 
     it('adds an endpoint directory', function(done) {
+      var inspect = stdout.inspect()
+
       manager.add('http://www.test.com/api/path', function(err) {
         manager.add('http://www.test.com/api/path/2', function(err) {
+          inspect.restore()
+
           assert.fileExists(utils.dataPath + 'www.test.com:api:path')
           assert.fileExists(utils.dataPath + 'www.test.com:api:path:2')
           done()
@@ -56,6 +65,8 @@ describe('manager', function() {
             inspect.restore()
 
             var expectedOutput = [
+              'endpoint added\n',
+              'endpoint added\n',
               'updating www.test.com/api/path\n',
               'updating www.test.com/api/path/2\n'
             ]
@@ -107,6 +118,7 @@ describe('manager', function() {
             inspect.restore()
 
             var expectedOutput = [
+              'endpoint added\n',
               'updating www.test.com/api/path\n',
               'updating www.test.com/api/path\n'
             ]
@@ -155,7 +167,11 @@ describe('manager', function() {
       })
 
       beforeEach(function (done) {
-        manager.add('http://www.test.com/api/path', done)
+        var inspect = stdout.inspect()
+        manager.add('http://www.test.com/api/path', function() {
+          inspect.restore()
+          done()
+        })
       })
 
       beforeEach(function (done) {
@@ -235,7 +251,11 @@ describe('manager', function() {
       var endpoint = 'http://www.test.com/api/path'
 
       beforeEach(function (done) {
-        manager.add(endpoint, done)
+        var inspect = stdout.inspect()
+        manager.add(endpoint, function() {
+          inspect.restore()
+          done()
+        })
       })
 
       it('outputs a warning', function(done) {
@@ -267,7 +287,11 @@ describe('manager', function() {
       })
 
       beforeEach(function (done) {
-        manager.add(endpoint, done)
+        var inspect = stdout.inspect()
+        manager.add(endpoint, function() {
+          inspect.restore()
+          done()
+        })
       })
 
       beforeEach(function (done) {
