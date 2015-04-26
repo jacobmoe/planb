@@ -37,7 +37,7 @@ Listening on port 5555
 
 $ planb
 
-  Usage: index [options] [command]
+  Usage: planb [options] [command]
 
 
   Commands:
