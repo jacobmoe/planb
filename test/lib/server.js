@@ -35,6 +35,8 @@ describe('server', function(){
     var endpoint0 = 'http://www.test.com/api/path'
     var endpoint1 = 'http://www.test.com/api/other'
 
+    afterEach(server.close)
+
     beforeEach(function (done) {
       var inspect = stdout.inspect()
       manager.add(endpoint0, function() {
@@ -98,6 +100,76 @@ describe('server', function(){
 
       })
     })
+  })
 
+  context('has endpoints with a query string', function() {
+    var endpoint0 = 'http://www.test.com/api?name=first&type=test'
+    var endpoint1 = 'http://www.test.com/api?name=second&type=test'
+
+    afterEach(server.close)
+
+    beforeEach(function (done) {
+      var inspect = stdout.inspect()
+      manager.add(endpoint0, function() {
+        inspect.restore()
+        done()
+      })
+    })
+
+    beforeEach(function (done) {
+      var inspect = stdout.inspect()
+      manager.add(endpoint1, function(err) {
+        inspect.restore()
+        done()
+      })
+    })
+
+    beforeEach(function (done) {
+      var name = 'www.test.com:api?name=first&type=test'
+      var path = utils.dataPath + name + '/0'
+      var data = '{"version":"0.0"}'
+
+      fs.writeFile(path, data, function() {
+        path = utils.dataPath + name + '/1'
+        data = '{"version":"0.1"}'
+        fs.writeFile(path, data, function() {
+          done()
+        })
+      })
+    })
+
+    beforeEach(function (done) {
+      var name = 'www.test.com:api?name=second&type=test'
+      var path = utils.dataPath + name + '/0'
+      var data = '{"version":"1.0"}'
+
+      fs.writeFile(path, data, function() {
+        path = utils.dataPath + name + '/1'
+        data = '{"version":"1.1"}'
+        fs.writeFile(path, data, function() {
+          done()
+        })
+      })
+    })
+
+    it('serves endpoint versions with exact query params', function(done) {
+      var inspect = stdout.inspect()
+
+      server(function(err) {
+        assert.notOk(err)
+
+        var url = 'http://localhost:5555/'
+        request(url + 'api?name=first&type=test', function (error, response, body) {
+          assert.equal(body, '{"version":"0.1"}')
+
+          request(url + 'api?name=second&type=test', function (error, response, body) {
+            inspect.restore()
+            assert.equal(body, '{"version":"1.1"}')
+            done()
+          })
+        })
+
+      })
+    })
   })
 })
