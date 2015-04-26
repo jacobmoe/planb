@@ -21,6 +21,8 @@ $ planb add http://reddit.com/r/node.json
 
 $ planb fetch
 
+updating www.reddit.com/r/node.json
+
 $ planb list
 
 .---------------------------------------------.
@@ -52,4 +54,4 @@ $ planb
     -h, --help  output usage information
 ```
 
-After running `planb serve`, swap any reference to the API domain (in the above example, `reddit.com`) with `localhost:5555`.
+After `planb serve`, swap references to the API domain (in the above example, `reddit.com`) with `localhost:5555`.
