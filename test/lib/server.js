@@ -71,7 +71,7 @@ describe('server', function(){
       })
     })
 
-    it('serves the latest version', function(done) {
+    it('serves latest endpoint versions', function(done) {
       var inspect = stdout.inspect()
 
       server(function(err) {
