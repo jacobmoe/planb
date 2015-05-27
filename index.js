@@ -31,6 +31,7 @@ program
 
 program
   .command('serve')
+  .option('-p, --port <n>', 'Specify port')
   .description('Serve local versions')
   .action(server)
 
