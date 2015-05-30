@@ -1,46 +1,46 @@
-var fs = require('fs')
-var async = require('async')
+import fs from 'fs'
+import async from 'async'
 
-var utils = require('./utils')
+import utils from './utils'
 
-function create(path, cb) {
-  var name = utils.endpointNameFromPath(path)
+export function create(path, cb) {
+  const name = utils.endpointNameFromPath(path)
 
-  utils.checkDataDir(function(err) {
+  utils.checkDataDir(err => {
     if (err) { cb(err); return }
 
-    utils.createDir(utils.dataPath + name, function(err) {
-      if (err) { cb(err); return }
+    utils.createDir(utils.dataPath + name, createDirErr => {
+      if (createDirErr) { cb(createDirErr); return }
 
-      cb()
+     cb()
     })
   })
 }
 
-function all(cb) {
-  fs.readdir(utils.dataPath, function(err, files) {
+export function all(cb) {
+  fs.readdir(utils.dataPath, (err, files) => {
     if (err) { cb(err); return }
 
-    cb(null, files.map(function(file) {
+    cb(null, files.map(file => {
       return utils.pathFromEndpointName(file)
     }))
   })
 }
 
-function remove(endpoint, callback) {
-  var name = utils.endpointNameFromPath(endpoint)
+export function remove(endpoint, callback) {
+  const name = utils.endpointNameFromPath(endpoint)
 
-  var endpointPath = utils.dataPath + name
+  const endpointPath = utils.dataPath + name
 
-  fs.readdir(endpointPath, function(err, files) {
+  fs.readdir(endpointPath, (err, files) => {
     if (err) { callback(err); return }
 
-    var jobs = files.reduce(function(collection, file) {
+    const jobs = files.reduce((collection, file) => {
       collection.push(function(cb) {
 
-        var versionPath = endpointPath + '/' + file
-        fs.unlink(versionPath, function(err) {
-          if (err) { cb(err); return }
+        const versionPath = endpointPath + '/' + file
+        fs.unlink(versionPath, unlinkErr => {
+          if (unlinkErr) { cb(unlinkErr); return }
 
           cb()
         })
@@ -49,20 +49,14 @@ function remove(endpoint, callback) {
       return collection
     }, [])
 
-    async.parallel(jobs, function(err) {
-      if (err) { callback(err); return }
+    async.parallel(jobs, unlinkAllErr => {
+      if (unlinkAllErr) { callback(unlinkAllErr); return }
 
-      fs.rmdir(endpointPath, function(err) {
-        if (err) { callback(err); return }
+      fs.rmdir(endpointPath, rmErr => {
+        if (rmErr) { callback(rmErr); return }
 
         callback()
       })
     })
   })
-}
-
-module.exports = {
-  create: create,
-  all: all,
-  remove: remove
 }

@@ -1,14 +1,15 @@
-var fs = require('fs')
+import fs from 'fs'
 
-var dataDirName = '.planb.d'
+let dataDirName = '.planb.d'
 
-if (process.env.NODE_ENV === 'test')
+if (process.env.NODE_ENV === 'test') {
   dataDirName = dataDirName + '.test'
+}
 
-var dataPath = process.env.HOME + '/' + dataDirName + '/'
+const dataPath = process.env.HOME + '/' + dataDirName + '/'
 
 function createDir(path, cb) {
-  fs.mkdir(path, function(err) {
+  fs.mkdir(path, err => {
     if (!err) { cb(null); return }
 
     if (err.code == 'EEXIST') cb(null)
@@ -21,7 +22,7 @@ function checkDataDir(cb) {
 }
 
 function endpointNameFromPath(path) {
-  var name = path.replace(/^https?:\/\//, '')
+  const name = path.replace(/^https?:\/\//, '')
 
   return name.replace(/\//g, ':')
 }
@@ -38,7 +39,7 @@ function largest(arr) {
   }
 }
 
-module.exports = {
+export default {
   dataPath: dataPath,
   createDir: createDir,
   checkDataDir: checkDataDir,

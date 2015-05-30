@@ -3,10 +3,10 @@ process.env.NODE_ENV = 'test'
 var fs = require('fs')
 var rimraf = require('rimraf')
 
-var utils = require('../src/lib/storage/utils')
-
 global.SRC_DIR = 'dist';
 global.assert = require('chai').assert
+
+var utils = require('../' + SRC_DIR + '/lib/storage/utils')
 
 global.assert.fileExists = function(path) {
   try {
@@ -33,8 +33,7 @@ global.assert.fileDoesNotExist = function(path) {
 }
 
 global.assert.fileHasContent = function(path, expected) {
-  var content;
-  var pass;
+  var content, pass
 
   try {
     content = fs.readFileSync(path, 'utf8')
