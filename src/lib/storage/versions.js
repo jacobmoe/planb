@@ -4,8 +4,8 @@ import async from 'async'
 import utils from './utils'
 
 export function create(endpointUrl, data, cb) {
-  var name = utils.endpointNameFromPath(endpointUrl)
-  var fileNum
+  const name = utils.endpointNameFromPath(endpointUrl)
+  let fileNum
 
   fs.readdir(utils.dataPath + name, (err, files) => {
     if (err) { cb(err); return }
@@ -16,7 +16,7 @@ export function create(endpointUrl, data, cb) {
       fileNum = utils.largest(files) + 1
     }
 
-    var fileName = utils.dataPath + name + '/' + fileNum
+    const fileName = utils.dataPath + name + '/' + fileNum
 
     fs.writeFile(fileName, data, writeErr => {
       if (writeErr) { cb(writeErr); return }
@@ -27,14 +27,14 @@ export function create(endpointUrl, data, cb) {
 }
 
 export function all(endpointUrl, callback) {
-  var name = utils.endpointNameFromPath(endpointUrl)
+  const name = utils.endpointNameFromPath(endpointUrl)
 
   fs.readdir(utils.dataPath + name, (err, versions) => {
     if (err) { callback(err); return }
 
-    var jobs = versions.reduce((collection, file) => {
+    const jobs = versions.reduce((collection, file) => {
       collection.push(cb => {
-        var versionPath = utils.dataPath + name + '/' + file
+        const versionPath = utils.dataPath + name + '/' + file
         fs.stat(versionPath, (statErr, stats) => {
           if (statErr) { cb(statErr); return }
 
@@ -52,7 +52,7 @@ export function all(endpointUrl, callback) {
 }
 
 export function current(endpointUrl, cb) {
-  var name = utils.endpointNameFromPath(endpointUrl)
+  const name = utils.endpointNameFromPath(endpointUrl)
 
   fs.readdir(utils.dataPath + name, (err, versions) => {
     if (err) { cb(err); return }
@@ -62,9 +62,9 @@ export function current(endpointUrl, cb) {
 }
 
 export function getData(endpointUrl, version, cb) {
-  var name = utils.endpointNameFromPath(endpointUrl)
+  const name = utils.endpointNameFromPath(endpointUrl)
 
-  var filePath = utils.dataPath + name + '/' + version
+  const filePath = utils.dataPath + name + '/' + version
 
   fs.readFile(filePath, 'utf8', (err, data) => {
     if (err) { cb(err); return }
@@ -74,9 +74,9 @@ export function getData(endpointUrl, version, cb) {
 }
 
 export function remove(endpointUrl, version, cb) {
-  var name = utils.endpointNameFromPath(endpointUrl)
+  const name = utils.endpointNameFromPath(endpointUrl)
 
-  var versionPath = utils.dataPath + name + '/' + version
+  const versionPath = utils.dataPath + name + '/' + version
   fs.unlink(versionPath, err => {
     if (err) { cb(err); return }
 
