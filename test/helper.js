@@ -3,8 +3,9 @@ process.env.NODE_ENV = 'test'
 var fs = require('fs')
 var rimraf = require('rimraf')
 
-var utils = require('../lib/storage/utils')
+var utils = require('../src/lib/storage/utils')
 
+global.SRC_DIR = 'dist';
 global.assert = require('chai').assert
 
 global.assert.fileExists = function(path) {

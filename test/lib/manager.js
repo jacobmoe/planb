@@ -2,8 +2,9 @@ var stdout = require('test-console').stdout
 var nock = require('nock')
 var fs = require('fs')
 
-var manager = require('../../lib/manager.js')
-var utils = require('../../lib/storage/utils')
+var srcPath = '../../' + SRC_DIR
+var manager = require(srcPath + '/lib/manager.js')
+var utils = require(srcPath + '/lib/storage/utils')
 
 describe('manager', function() {
   afterEach(cleanup)
@@ -12,7 +13,7 @@ describe('manager', function() {
     it('creates a data directory, if not present', function(done) {
       var inspect = stdout.inspect()
 
-      manager.add('http://www.test.com/api/path', function(err) {
+      manager.add('http://www.test.com/api/path', null, function(err) {
         inspect.restore()
 
         assert.fileExists(utils.dataPath)
@@ -24,8 +25,8 @@ describe('manager', function() {
     it('adds an endpoint directory', function(done) {
       var inspect = stdout.inspect()
 
-      manager.add('http://www.test.com/api/path', function(err) {
-        manager.add('http://www.test.com/api/path/2', function(err) {
+      manager.add('http://www.test.com/api/path', null, function(err) {
+        manager.add('http://www.test.com/api/path/2', null, function(err) {
           inspect.restore()
 
           assert.fileExists(utils.dataPath + 'www.test.com:api:path')
@@ -40,7 +41,7 @@ describe('manager', function() {
     it('outputs a warning if no data directory exist', function(done) {
       var inspect = stdout.inspect()
 
-      manager.fetch(function() {
+      manager.fetch(null, function() {
         inspect.restore()
         assert.deepEqual(inspect.output, [ "add an endpoint first\n"])
         done()
@@ -56,12 +57,12 @@ describe('manager', function() {
 
       var inspect = stdout.inspect()
 
-      manager.add('http://www.test.com/api/path', function(err) {
-        manager.add('http://www.test.com/api/path/2', function(err) {
+      manager.add('http://www.test.com/api/path', null, function(err) {
+        manager.add('http://www.test.com/api/path/2', null, function(err) {
           assert.fileExists(utils.dataPath + 'www.test.com:api:path')
           assert.fileExists(utils.dataPath + 'www.test.com:api:path:2')
 
-          manager.fetch(function() {
+          manager.fetch(null, function() {
             inspect.restore()
 
             var expectedOutput = [
@@ -103,10 +104,10 @@ describe('manager', function() {
 
       var inspect = stdout.inspect()
 
-      manager.add('http://www.test.com/api/path', function(err) {
+      manager.add('http://www.test.com/api/path', null, function(err) {
         assert.fileExists(utils.dataPath + 'www.test.com:api:path')
 
-        manager.fetch(function() {
+        manager.fetch(null, function() {
           assert.fileExists(utils.dataPath + 'www.test.com:api:path/0')
 
           assert.fileHasContent(
@@ -114,7 +115,7 @@ describe('manager', function() {
             '{"content":"version 0 content"}'
           )
 
-          manager.fetch(function() {
+          manager.fetch(null, function() {
             inspect.restore()
 
             var expectedOutput = [
@@ -145,7 +146,7 @@ describe('manager', function() {
       it('outputs a warning', function(done) {
         var inspect = stdout.inspect()
 
-        manager.list(function() {
+        manager.list(null, function() {
           inspect.restore()
           assert.deepEqual(inspect.output, [ "add an endpoint first\n"])
           done()
@@ -168,7 +169,7 @@ describe('manager', function() {
 
       beforeEach(function (done) {
         var inspect = stdout.inspect()
-        manager.add('http://www.test.com/api/path', function() {
+        manager.add('http://www.test.com/api/path', null, function() {
           inspect.restore()
           done()
         })
@@ -176,10 +177,10 @@ describe('manager', function() {
 
       beforeEach(function (done) {
         var inspect = stdout.inspect()
-        manager.fetch(function() {
+        manager.fetch(null, function() {
           assert.fileExists(utils.dataPath + 'www.test.com:api:path/0')
 
-          manager.fetch(function() {
+          manager.fetch(null, function() {
             assert.fileExists(utils.dataPath + 'www.test.com:api:path/1')
             inspect.restore()
             done()
@@ -210,7 +211,7 @@ describe('manager', function() {
 
         assert.fileExists(utils.dataPath + 'www.test.com:api:path')
 
-        manager.list(function() {
+        manager.list(null, function() {
           inspect.restore()
 
           var expected = [
@@ -236,7 +237,7 @@ describe('manager', function() {
       it('outputs a warning', function(done) {
         var inspect = stdout.inspect()
 
-        manager.rollback(function() {
+        manager.rollback(null, null, function() {
           inspect.restore()
 
           var expected = ['missing endpoint. try the list command\n']
@@ -252,7 +253,7 @@ describe('manager', function() {
 
       beforeEach(function (done) {
         var inspect = stdout.inspect()
-        manager.add(endpoint, function() {
+        manager.add(endpoint, null, function() {
           inspect.restore()
           done()
         })
@@ -261,7 +262,7 @@ describe('manager', function() {
       it('outputs a warning', function(done) {
         var inspect = stdout.inspect()
 
-        manager.rollback(endpoint, function() {
+        manager.rollback(endpoint, null, function() {
           inspect.restore()
 
           var expected = ['no versions for that endpoint\n']
@@ -288,7 +289,7 @@ describe('manager', function() {
 
       beforeEach(function (done) {
         var inspect = stdout.inspect()
-        manager.add(endpoint, function() {
+        manager.add(endpoint, null, function() {
           inspect.restore()
           done()
         })
@@ -296,8 +297,8 @@ describe('manager', function() {
 
       beforeEach(function (done) {
         var inspect = stdout.inspect()
-        manager.fetch(function() {
-          manager.fetch(function() {
+        manager.fetch(null, function() {
+          manager.fetch(null, function() {
             inspect.restore()
             done()
           })
@@ -310,7 +311,7 @@ describe('manager', function() {
 
         var inspect = stdout.inspect()
 
-        manager.rollback(endpoint, function() {
+        manager.rollback(endpoint, null, function() {
           inspect.restore()
 
           assert.fileExists(utils.dataPath + 'www.test.com:api:path/0')

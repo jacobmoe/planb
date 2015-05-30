@@ -1,0 +1,36 @@
+{
+  "ecmaFeatures": {
+    "modules": true
+  },
+  "rules": {
+    "semi": [2, "never"],
+    "quotes": 0,
+    "curly": [2, "multi-line"],
+    "eqeqeq": 0
+  },
+  "env": {
+    "node": true,
+    "mocha": true,
+    "es6": true
+  },
+  "globals": {
+    "__dirname": true,
+    "global": true,
+    "process": true,
+    "require": true,
+    "module": true,
+    "console": true,
+    "describe": true,
+    "it": true,
+    "assert": true,
+    "assertFileExists": true,
+    "cleanup": true,
+    "before": true,
+    "beforeEach": true,
+    "after": true,
+    "afterEach": true,
+    "inject": true,
+    "sinon": true,
+    "context": true
+  }
+}

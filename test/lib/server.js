@@ -3,9 +3,10 @@ var nock = require('nock')
 var fs = require('fs')
 var request = require('request')
 
-var server = require('../../lib/server.js')
-var manager = require('../../lib/manager.js')
-var utils = require('../../lib/storage/utils')
+var srcPath = '../../' + SRC_DIR
+var server = require(srcPath + '/lib/server.js')
+var manager = require(srcPath + '/lib/manager.js')
+var utils = require(srcPath + '/lib/storage/utils')
 
 describe('server', function(){
   afterEach(cleanup)
@@ -39,7 +40,7 @@ describe('server', function(){
 
     beforeEach(function (done) {
       var inspect = stdout.inspect()
-      manager.add(endpoint0, function() {
+      manager.add(endpoint0, null, function() {
         inspect.restore()
         done()
       })
@@ -47,7 +48,7 @@ describe('server', function(){
 
     beforeEach(function (done) {
       var inspect = stdout.inspect()
-      manager.add(endpoint1, function() {
+      manager.add(endpoint1, null, function() {
         inspect.restore()
         done()
       })
@@ -110,7 +111,7 @@ describe('server', function(){
 
     beforeEach(function (done) {
       var inspect = stdout.inspect()
-      manager.add(endpoint0, function() {
+      manager.add(endpoint0, null, function() {
         inspect.restore()
         done()
       })
@@ -118,7 +119,7 @@ describe('server', function(){
 
     beforeEach(function (done) {
       var inspect = stdout.inspect()
-      manager.add(endpoint1, function(err) {
+      manager.add(endpoint1, null, function(err) {
         inspect.restore()
         done()
       })
