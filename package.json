@@ -2,12 +2,13 @@
   "name": "planb",
   "version": "0.0.6",
   "description": "Serve essential API data locally when the API is down",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "node_modules/.bin/mocha"
+    "test": "./node_modules/.bin/gulp build && ./node_modules/.bin/mocha",
+    "prepublish": "./node_modules/.bin/gulp build"
   },
   "bin": {
-    "planb": "./index.js"
+    "planb": "./dist/index.js"
   },
   "repository": {
     "type": "git",
@@ -31,7 +32,10 @@
     "rimraf": "^2.3.2"
   },
   "devDependencies": {
+    "babel": "^5.4.7",
     "chai": "^2.2.0",
+    "gulp": "^3.8.11",
+    "gulp-babel": "^5.1.0",
     "mocha": "^2.2.4",
     "nock": "^1.7.0",
     "test-console": "^0.7.1"

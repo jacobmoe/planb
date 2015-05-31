@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-var program = require('commander')
-var manager = require('./lib/manager')
-var server = require('./lib/server')
+import program from 'commander'
+import manager from './lib/manager'
+import server from './lib/server'
 
 program
   .command('add [url]')

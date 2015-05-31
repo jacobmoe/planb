@@ -1,8 +1,19 @@
 {
-  "asi": true,       // no semicolons
-  "laxcomma": true,  // leading commas are ok
-  "undef": true,     // warn if variable is not explicitly defined
-  "globals": {       // exclude these globals from undef warnings
+  "ecmaFeatures": {
+    "modules": true
+  },
+  "rules": {
+    "semi": [2, "never"],
+    "quotes": 0,
+    "curly": [2, "multi-line"],
+    "eqeqeq": 0
+  },
+  "env": {
+    "node": true,
+    "mocha": true,
+    "es6": true
+  },
+  "globals": {
     "__dirname": true,
     "global": true,
     "process": true,
@@ -20,6 +31,7 @@
     "afterEach": true,
     "inject": true,
     "sinon": true,
-    "context": true
+    "context": true,
+    "SRC_DIR": true
   }
 }
