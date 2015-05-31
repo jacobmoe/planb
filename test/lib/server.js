@@ -3,6 +3,7 @@ var nock = require('nock')
 var fs = require('fs')
 var request = require('request')
 
+// variables in ES6 imports. how?
 var srcPath = '../../' + SRC_DIR
 var server = require(srcPath + '/lib/server.js')
 var manager = require(srcPath + '/lib/manager.js')

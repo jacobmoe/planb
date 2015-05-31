@@ -1,0 +1,9 @@
+{
+  "endpoints": [
+    {
+      "port": 5000,
+      "urls": []
+      "default": true
+    }
+  ]
+}
