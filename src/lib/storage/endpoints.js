@@ -1,19 +1,16 @@
 import fs from 'fs'
+import path from 'path'
 import async from 'async'
 
 import utils from './utils'
 
-export function create(path, cb) {
-  const name = utils.endpointNameFromPath(path)
+export function create(dataPath, url, cb) {
+  const name = utils.endpointNameFromPath(url)
 
-  utils.checkDataDir(err => {
-    if (err) { cb(err); return }
+  utils.createDir(path.join(dataPath, name), createDirErr => {
+    if (createDirErr) { cb(createDirErr); return }
 
-    utils.createDir(utils.dataPath + name, createDirErr => {
-      if (createDirErr) { cb(createDirErr); return }
-
-     cb()
-    })
+    cb()
   })
 }
 

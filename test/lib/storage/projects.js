@@ -1,14 +1,12 @@
 import fs from 'fs'
 import fsExtra from 'fs-extra'
-import testConsole from 'test-console'
-
-const stdout = testConsole.stdout
 
 // variables in ES6 imports. how?
 const srcPath = '../../../' + SRC_DIR
+const controller = require(srcPath + '/lib/project')
 const projects = require(srcPath + '/lib/storage/projects')
 
-describe('projects', () => {
+describe('storage/projects', () => {
   before(cleanup)
   afterEach(cleanup)
 
@@ -38,7 +36,7 @@ describe('projects', () => {
     })
 
     context('project initialized', () => {
-      beforeEach(projects.init)
+      beforeEach(controller.init)
 
       it('returns the path to the project root', done => {
         projects.getRoot((err, path) => {
@@ -59,7 +57,7 @@ describe('projects', () => {
         fsExtra.remove(tempDirName, done)
       }
 
-      beforeEach(projects.init)
+      beforeEach(controller.init)
 
       beforeEach(done => {
         fs.mkdir(tempDirName, (err) => {
@@ -93,56 +91,78 @@ describe('projects', () => {
     })
   })
 
-  describe('init', () => {
-    context('project not initialized', () => {
-      it('creates data dir and config in current directory', done => {
-        fs.readdir(process.cwd(), (err, files) => {
+  describe('createDataDir', () => {
+    it('creates a data directory in current directory', done => {
+      fs.readdir(process.cwd(), (err, files) => {
+        assert.notOk(err)
+        assert.equal(files.indexOf(projects.dataDirName), -1)
+
+        projects.createDataDir(err => {
           assert.notOk(err)
-          assert.equal(files.indexOf(projects.dataDirName), -1)
-          assert.equal(files.indexOf(projects.configName), -1)
 
-          projects.init(initErr => {
-            fs.readdir(process.cwd(), (err, files) => {
-              assert.notOk(initErr)
-              assert.notOk(err)
-              assert.notEqual(files.indexOf(projects.dataDirName), -1)
-              assert.notEqual(files.indexOf(projects.configName), -1)
-
-              done()
-            })
-          })
-        })
-      })
-
-      it('adds default config content', done => {
-        const expected = {
-          "endpoints": [
-            {
-              "port": 5000,
-              "urls": [],
-              "default": true
-            }
-          ]
-        }
-
-        projects.init(initErr => {
-          fs.readFile(projects.configName, 'utf8', (err, data) => {
+          fs.readdir(process.cwd(), (err, files) => {
             assert.notOk(err)
-
-            assert.deepEqual(JSON.parse(data), expected)
+            assert.isAbove(files.indexOf(projects.dataDirName), -1)
             done()
           })
         })
       })
     })
+  })
 
-    context('project initialized', () => {
-      beforeEach(projects.init)
+  describe('createConfig', () => {
+    it('creates a config file in current directory', done => {
+      fs.readdir(process.cwd(), (err, files) => {
+        assert.notOk(err)
+        assert.equal(files.indexOf(projects.configName), -1)
 
-      it('returns a warning', done => {
-        projects.init(initErr => {
-          assert.equal(initErr.message, 'Project already initialized')
-          done()
+        projects.createConfig(err => {
+          assert.notOk(err)
+
+          fs.readdir(process.cwd(), (err, files) => {
+            assert.notOk(err)
+            assert.isAbove(files.indexOf(projects.configName), -1)
+            done()
+          })
+        })
+      })
+    })
+  })
+
+
+  describe('checkPwdDataDir', () => {
+    it('checks if current directory has a data dir', done => {
+      projects.checkPwdDataDir((err, exists) => {
+        assert.isNull(err)
+        assert.isFalse(exists)
+
+        projects.createDataDir(err => {
+          assert.notOk(err)
+
+          projects.checkPwdDataDir((err, exists) => {
+            assert.isNull(err)
+            assert.isTrue(exists)
+            done()
+          })
+        })
+      })
+    })
+  })
+
+  describe('checkPwdConfig', () => {
+    it('checks if current directory has a config file', done => {
+      projects.checkPwdConfig((err, exists) => {
+        assert.isNull(err)
+        assert.isFalse(exists)
+
+        projects.createConfig(err => {
+          assert.notOk(err)
+
+          projects.checkPwdConfig((err, exists) => {
+            assert.isNull(err)
+            assert.isTrue(exists)
+            done()
+          })
         })
       })
     })

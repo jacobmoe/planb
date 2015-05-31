@@ -3,6 +3,7 @@ import fsExtra from 'fs-extra'
 import path from 'path'
 
 import packageJson from '../../../package'
+import utils from './utils'
 
 const name = packageJson.name
 
@@ -46,45 +47,59 @@ function getRoot(cb, dots) {
   })
 }
 
-function init(cb) {
+function checkPwdDataDir(cb) {
   const dataDirPath = path.join(process.cwd(), dataDirName)
+
+  utils.fileExists(dataDirPath, cb)
+}
+
+function checkPwdConfig(cb) {
   const configPath = process.cwd() + '/' + configName
 
-  let dataDirExists
+  utils.fileExists(configPath, cb)
+}
+
+/*
+ * Create project data directory
+ *
+ * Nothing is returned is directory created successfully,
+ * or if directory already exists
+*/
+function createDataDir(cb) {
+  const dataDirPath = path.join(process.cwd(), dataDirName)
 
   fs.mkdir(dataDirPath, err => {
-    if (err) {
-      if (err.code === 'EEXIST') {
-        dataDirExists = true
-      } else {
-        cb({message: 'Error creating data directory', data: err})
-        return
-      }
+    if (err && err.code !== 'EXIST') {
+      cb({message: 'Error creating data directory', data: err})
+    } else {
+      cb()
     }
+  })
+}
 
-    fs.stat(configPath, (existsError, stat) => {
-      if (existsError && existsError.code === 'ENOENT') {
-        // config doesn't exist already. copy default config
-        fsExtra.copy(defaultConfigPath, configPath, copyErr => {
-          if (copyErr) {
-            cb({message: 'Error creating project config', data: copyErr})
-          } else {
-            cb()
-          }
-        })
-      } else if (existsError) {
-        // error checking config file existance
-        cb({message: 'Error creating project config', data: existsError})
-      } else {
-        // config file exists
-        if (dataDirExists) {
-          cb({message: 'Project already initialized'})
+/*
+ * Create project config file
+ *
+ * Nothing is returned is file created successfully,
+ * or if file already exists
+*/
+function createConfig(cb) {
+  const configPath = process.cwd() + '/' + configName
+
+  checkPwdConfig(function(err, exists) {
+    if (exists) {
+      cb()
+    } else if (err) {
+      cb({message: "Error creating project config", data: err})
+    } else {
+      fsExtra.copy(defaultConfigPath, configPath, err => {
+        if (err) {
+          cb({message: 'Error creating project config', data: err})
         } else {
-          // created a data directory, but not the config file
           cb()
         }
-      }
-    })
+      })
+    }
   })
 }
 
@@ -92,5 +107,8 @@ export default {
   dataDirName: dataDirName,
   configName: configName,
   getRoot: getRoot,
-  init: init
+  checkPwdDataDir: checkPwdDataDir,
+  checkPwdConfig: checkPwdConfig,
+  createDataDir: createDataDir,
+  createConfig: createConfig
 }

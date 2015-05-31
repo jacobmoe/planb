@@ -1,17 +1,5 @@
 import fs from 'fs'
 
-let dataDirName = '.planb.d'
-
-if (process.env.NODE_ENV === 'test') {
-  dataDirName = dataDirName + '.test'
-}
-
-function getUserHome() {
-  return process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME']
-}
-
-const dataPath = getUserHome() + '/' + dataDirName + '/'
-
 function createDir(path, cb) {
   fs.mkdir(path, err => {
     if (!err) { cb(null); return }
@@ -19,10 +7,6 @@ function createDir(path, cb) {
     if (err.code == 'EEXIST') cb(null)
     else cb(err)
   })
-}
-
-function checkDataDir(cb) {
-  createDir(dataPath, cb)
 }
 
 function endpointNameFromPath(path) {
@@ -43,11 +27,22 @@ function largest(arr) {
   }
 }
 
+function fileExists(path, cb) {
+  fs.stat(path, err => {
+    if (err && err.code === 'ENOENT') {
+      cb(null, false)
+    } else if (err) {
+      cb(err)
+    } else {
+      cb(null, true)
+    }
+  })
+}
+
 export default {
-  dataPath: dataPath,
   createDir: createDir,
-  checkDataDir: checkDataDir,
   endpointNameFromPath: endpointNameFromPath,
   pathFromEndpointName: pathFromEndpointName,
-  largest: largest
+  largest: largest,
+  fileExists: fileExists
 }
