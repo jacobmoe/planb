@@ -1,34 +1,41 @@
-var stdout = require('test-console').stdout
-var nock = require('nock')
-var fs = require('fs')
+import testConsole from 'test-console'
+import nock from 'nock'
+import fs from 'fs'
 
-var srcPath = '../../' + SRC_DIR
-var manager = require(srcPath + '/lib/manager.js')
-var utils = require(srcPath + '/lib/storage/utils')
+// can't use variable import names for ES6 import statements?
+const srcPath = '../../' + SRC_DIR
+const manager = require(srcPath + '/lib/manager.js')
+const utils = require(srcPath + '/lib/storage/utils')
 
-describe('manager', function() {
+const stdout = testConsole.stdout
+
+describe('manager', () => {
   afterEach(cleanup)
 
-  describe('add', function() {
-    it('creates a data directory, if not present', function(done) {
-      var inspect = stdout.inspect()
+  describe('add', () => {
+    it('creates a data directory, if not present', done => {
+      const inspect = stdout.inspect()
 
-      manager.add('http://www.test.com/api/path', null, function(err) {
+      manager.add('http://www.test.com/api/path', null, err => {
         inspect.restore()
 
+        assert.notOk(err)
         assert.fileExists(utils.dataPath)
         assert.deepEqual(inspect.output, ['endpoint added\n'])
         done()
       })
     })
 
-    it('adds an endpoint directory', function(done) {
-      var inspect = stdout.inspect()
+    it('adds an endpoint directory', done => {
+      const inspect = stdout.inspect()
 
-      manager.add('http://www.test.com/api/path', null, function(err) {
-        manager.add('http://www.test.com/api/path/2', null, function(err) {
+      manager.add('http://www.test.com/api/path', null, err => {
+        assert.notOk(err)
+
+        manager.add('http://www.test.com/api/path/2', null, err2 => {
           inspect.restore()
 
+          assert.notOk(err2)
           assert.fileExists(utils.dataPath + 'www.test.com:api:path')
           assert.fileExists(utils.dataPath + 'www.test.com:api:path:2')
           done()
@@ -37,35 +44,35 @@ describe('manager', function() {
     })
   })
 
-  describe('fetch', function() {
-    it('outputs a warning if no data directory exist', function(done) {
-      var inspect = stdout.inspect()
+  describe('fetch', () => {
+    it('outputs a warning if no data directory exist', done => {
+      const inspect = stdout.inspect()
 
-      manager.fetch(null, function() {
+      manager.fetch(null, () => {
         inspect.restore()
         assert.deepEqual(inspect.output, [ "add an endpoint first\n"])
         done()
       })
     })
 
-    it('adds a new version to each existing endpoint', function(done) {
+    it('adds a new version to each existing endpoint', done => {
       nock('http://www.test.com')
       .get('/api/path')
       .reply(200, {content: 'some content'})
       .get('/api/path/2')
       .reply(200, {content: 'some more content'})
 
-      var inspect = stdout.inspect()
+      const inspect = stdout.inspect()
 
-      manager.add('http://www.test.com/api/path', null, function(err) {
-        manager.add('http://www.test.com/api/path/2', null, function(err) {
+      manager.add('http://www.test.com/api/path', null, err => {
+        manager.add('http://www.test.com/api/path/2', null, err => {
           assert.fileExists(utils.dataPath + 'www.test.com:api:path')
           assert.fileExists(utils.dataPath + 'www.test.com:api:path:2')
 
-          manager.fetch(null, function() {
+          manager.fetch(null, () => {
             inspect.restore()
 
-            var expectedOutput = [
+            const expectedOutput = [
               'endpoint added\n',
               'endpoint added\n',
               'updating www.test.com/api/path\n',
@@ -93,7 +100,7 @@ describe('manager', function() {
       })
     })
 
-    it('increments version number', function(done) {
+    it('increments version number', done => {
       nock('http://www.test.com')
       .get('/api/path')
       .reply(200, {content: 'version 0 content'})
@@ -102,12 +109,12 @@ describe('manager', function() {
       .get('/api/path')
       .reply(200, {content: 'version 1 content'})
 
-      var inspect = stdout.inspect()
+      const inspect = stdout.inspect()
 
-      manager.add('http://www.test.com/api/path', null, function(err) {
+      manager.add('http://www.test.com/api/path', null, err => {
         assert.fileExists(utils.dataPath + 'www.test.com:api:path')
 
-        manager.fetch(null, function() {
+        manager.fetch(null, () => {
           assert.fileExists(utils.dataPath + 'www.test.com:api:path/0')
 
           assert.fileHasContent(
@@ -115,10 +122,10 @@ describe('manager', function() {
             '{"content":"version 0 content"}'
           )
 
-          manager.fetch(null, function() {
+          manager.fetch(null, () => {
             inspect.restore()
 
-            var expectedOutput = [
+            const expectedOutput = [
               'endpoint added\n',
               'updating www.test.com/api/path\n',
               'updating www.test.com/api/path\n'
@@ -141,12 +148,12 @@ describe('manager', function() {
     })
   })
 
-  describe('list', function() {
-    context('data directory not present', function() {
-      it('outputs a warning', function(done) {
-        var inspect = stdout.inspect()
+  describe('list', () => {
+    context('data directory not present', () => {
+      it('outputs a warning', done => {
+        const inspect = stdout.inspect()
 
-        manager.list(null, function() {
+        manager.list(null, () => {
           inspect.restore()
           assert.deepEqual(inspect.output, [ "add an endpoint first\n"])
           done()
@@ -154,10 +161,10 @@ describe('manager', function() {
       })
     })
 
-    context('existing endpoint and versions', function() {
-      var mtime0, mtime1
+    context('existing endpoint and versions', () => {
+      let mtime0, mtime1
 
-      beforeEach(function () {
+      beforeEach(() => {
         nock('http://www.test.com')
         .get('/api/path')
         .reply(200, {content: 'version 0 content'})
@@ -167,20 +174,20 @@ describe('manager', function() {
         .reply(200, {content: 'version 1 content'})
       })
 
-      beforeEach(function (done) {
-        var inspect = stdout.inspect()
-        manager.add('http://www.test.com/api/path', null, function() {
+      beforeEach(done => {
+        const inspect = stdout.inspect()
+        manager.add('http://www.test.com/api/path', null, () => {
           inspect.restore()
           done()
         })
       })
 
-      beforeEach(function (done) {
-        var inspect = stdout.inspect()
-        manager.fetch(null, function() {
+      beforeEach(done => {
+        const inspect = stdout.inspect()
+        manager.fetch(null, () => {
           assert.fileExists(utils.dataPath + 'www.test.com:api:path/0')
 
-          manager.fetch(null, function() {
+          manager.fetch(null, () => {
             assert.fileExists(utils.dataPath + 'www.test.com:api:path/1')
             inspect.restore()
             done()
@@ -188,8 +195,8 @@ describe('manager', function() {
         })
       })
 
-      beforeEach(function (done) {
-        var path = utils.dataPath + 'www.test.com:api:path/0'
+      beforeEach(done => {
+        const path = utils.dataPath + 'www.test.com:api:path/0'
         fs.stat(path, function(err, stats) {
 
           mtime0 = stats.mtime
@@ -197,8 +204,8 @@ describe('manager', function() {
         })
       })
 
-      beforeEach(function (done) {
-        var path = utils.dataPath + 'www.test.com:api:path/1'
+      beforeEach(done => {
+        const path = utils.dataPath + 'www.test.com:api:path/1'
         fs.stat(path, function(err, stats) {
 
           mtime1 = stats.mtime
@@ -206,15 +213,15 @@ describe('manager', function() {
         })
       })
 
-      it('outputs endpoints and versions as a table', function(done) {
-        var inspect = stdout.inspect()
+      it('outputs endpoints and versions as a table', done => {
+        const inspect = stdout.inspect()
 
         assert.fileExists(utils.dataPath + 'www.test.com:api:path')
 
-        manager.list(null, function() {
+        manager.list(null, () => {
           inspect.restore()
 
-          var expected = [
+          const expected = [
             '.---------------------------------------------.\n',
             '|   |          www.test.com/api/path          |\n',
             '|---|-----------------------------------------|\n',
@@ -232,15 +239,15 @@ describe('manager', function() {
     })
   })
 
-  describe('rollback', function () {
-    context('missing argument', function() {
-      it('outputs a warning', function(done) {
-        var inspect = stdout.inspect()
+  describe('rollback', () => {
+    context('missing argument', () => {
+      it('outputs a warning', done => {
+        const inspect = stdout.inspect()
 
-        manager.rollback(null, null, function() {
+        manager.rollback(null, null, () => {
           inspect.restore()
 
-          var expected = ['missing endpoint. try the list command\n']
+          const expected = ['missing endpoint. try the list command\n']
 
           assert.deepEqual(inspect.output, expected)
           done()
@@ -248,24 +255,24 @@ describe('manager', function() {
       })
     })
 
-    context('no existing versions for endpoint', function() {
-      var endpoint = 'http://www.test.com/api/path'
+    context('no existing versions for endpoint', () => {
+      const endpoint = 'http://www.test.com/api/path'
 
-      beforeEach(function (done) {
-        var inspect = stdout.inspect()
-        manager.add(endpoint, null, function() {
+      beforeEach(done => {
+        const inspect = stdout.inspect()
+        manager.add(endpoint, null, () => {
           inspect.restore()
           done()
         })
       })
 
-      it('outputs a warning', function(done) {
-        var inspect = stdout.inspect()
+      it('outputs a warning', done => {
+        const inspect = stdout.inspect()
 
-        manager.rollback(endpoint, null, function() {
+        manager.rollback(endpoint, null, () => {
           inspect.restore()
 
-          var expected = ['no versions for that endpoint\n']
+          const expected = ['no versions for that endpoint\n']
 
           assert.deepEqual(inspect.output, expected)
           done()
@@ -274,10 +281,10 @@ describe('manager', function() {
 
     })
 
-    context('existing versions', function() {
-      var endpoint = 'http://www.test.com/api/path'
+    context('existing versions', () => {
+      const endpoint = 'http://www.test.com/api/path'
 
-      beforeEach(function () {
+      beforeEach(() => {
         nock('http://www.test.com')
         .get('/api/path')
         .reply(200, {content: 'version 0 content'})
@@ -287,31 +294,31 @@ describe('manager', function() {
         .reply(200, {content: 'version 1 content'})
       })
 
-      beforeEach(function (done) {
-        var inspect = stdout.inspect()
-        manager.add(endpoint, null, function() {
+      beforeEach(done => {
+        const inspect = stdout.inspect()
+        manager.add(endpoint, null, () => {
           inspect.restore()
           done()
         })
       })
 
-      beforeEach(function (done) {
-        var inspect = stdout.inspect()
-        manager.fetch(null, function() {
-          manager.fetch(null, function() {
+      beforeEach(done => {
+        const inspect = stdout.inspect()
+        manager.fetch(null, () => {
+          manager.fetch(null, () => {
             inspect.restore()
             done()
           })
         })
       })
 
-      it('removes the current version', function(done) {
+      it('removes the current version', done => {
         assert.fileExists(utils.dataPath + 'www.test.com:api:path/0')
         assert.fileExists(utils.dataPath + 'www.test.com:api:path/1')
 
-        var inspect = stdout.inspect()
+        const inspect = stdout.inspect()
 
-        manager.rollback(endpoint, null, function() {
+        manager.rollback(endpoint, null, () => {
           inspect.restore()
 
           assert.fileExists(utils.dataPath + 'www.test.com:api:path/0')

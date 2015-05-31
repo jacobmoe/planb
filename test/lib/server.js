@@ -23,7 +23,7 @@ describe('server', function(){
     it('outputs a warning', function(done) {
       var inspect = stdout.inspect()
 
-      server(function() {
+      server.default(function() {
         inspect.restore()
         assert.deepEqual(inspect.output, [ "add an endpoint first\n"])
         done()
@@ -85,7 +85,7 @@ describe('server', function(){
     it('serves latest endpoint versions', function(done) {
       var inspect = stdout.inspect()
 
-      server(function(err) {
+      server.default(function(err) {
         assert.notOk(err)
 
         var url = 'http://localhost:5555/'
@@ -156,7 +156,7 @@ describe('server', function(){
     it('serves endpoint versions with exact query params', function(done) {
       var inspect = stdout.inspect()
 
-      server(function(err) {
+      server.default(function(err) {
         assert.notOk(err)
 
         var url = 'http://localhost:5555/'

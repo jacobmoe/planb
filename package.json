@@ -32,6 +32,7 @@
     "rimraf": "^2.3.2"
   },
   "devDependencies": {
+    "babel": "^5.4.7",
     "chai": "^2.2.0",
     "gulp": "^3.8.11",
     "gulp-babel": "^5.1.0",

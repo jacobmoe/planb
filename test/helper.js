@@ -1,9 +1,11 @@
 process.env.NODE_ENV = 'test'
 
+require("babel/register")()
+
 var fs = require('fs')
 var rimraf = require('rimraf')
 
-global.SRC_DIR = 'dist';
+global.SRC_DIR = 'dist'
 global.assert = require('chai').assert
 
 var utils = require('../' + SRC_DIR + '/lib/storage/utils')

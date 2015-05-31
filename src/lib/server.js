@@ -1,42 +1,42 @@
-var express = require('express')
-var app = express()
-var url = require('url')
+import express from 'express'
+import url from 'url'
+import storage from './storage'
 
-var storage = require('./storage')
-var server
+const app = express()
+let server
 
 function registerGet(parsedEndpoint) {
-  app.get(parsedEndpoint.pathname, function(req, res) {
-    var endpointDirName = parsedEndpoint.host + req.url
+  app.get(parsedEndpoint.pathname, (req, res) => {
+    const endpointDirName = parsedEndpoint.host + req.url
 
-    storage.versions.current(endpointDirName, function(err, version) {
+    storage.versions.current(endpointDirName, (err, version) => {
       if (err) {
-        res.status(404).send('No versions found for ' + endpointDirName);
+        res.status(404).send('No versions found for ' + endpointDirName)
         return
       }
 
-      storage.versions.getData(endpointDirName, version, function(err, data) {
+      storage.versions.getData(endpointDirName, version, (getDataErr, data) => {
         try {
           res.json(JSON.parse(data))
         } catch (error) {
-          res.status(415).send('Only JSON APIs are supported ATM');
+          res.status(415).send('Only JSON APIs are supported ATM')
         }
       })
     })
   })
 }
 
-module.exports = function(callback) {
+export default function(callback) {
   if (typeof callback !== 'function') callback = function() {}
 
-  storage.endpoints.all(function(err, endpoints) {
+  storage.endpoints.all((err, endpoints) => {
     if (err || !endpoints) {
       console.log('add an endpoint first')
       callback({message: 'no endpoints'})
       return
     }
 
-    endpoints.forEach(function(endpoint) {
+    endpoints.forEach(endpoint => {
       registerGet(url.parse('http://' + endpoint))
     })
 
@@ -49,6 +49,6 @@ module.exports = function(callback) {
   })
 }
 
-module.exports.close = function() {
+export function close() {
   if (server) server.close()
 }
