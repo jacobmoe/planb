@@ -1,4 +1,5 @@
 import fs from 'fs'
+import fsExtra from 'fs-extra'
 import path from 'path'
 
 import packageJson from '../../../package'
@@ -18,16 +19,16 @@ const defaultConfigPath = path.join(
   '../../../assets/json/defaultConfig.json'
 )
 
-function getProjectRoot(cb, dots) {
+function getRoot(cb, dots) {
   dots = dots || '.'
 
-  var currentPath = path.join(process.cwd(), dots)
-  var projectPath = currentPath + '/' + dataDirName
+  const currentPath = path.join(process.cwd(), dots)
+  const projectPath = currentPath + '/' + dataDirName
 
   fs.stat(projectPath, (err, stat) => {
-    if (err) {
+    if (err && err.code === 'ENOENT') {
       if (currentPath === '/') {
-        cb(null)
+        cb({message: 'Project not initialized'})
       } else {
         if (dots === '.') {
           dots = '..'
@@ -35,34 +36,61 @@ function getProjectRoot(cb, dots) {
           dots = dots + '/..'
         }
 
-        getProjectRoot(cb, dots)
+        getRoot(cb, dots)
       }
+    } else if (err) {
+      cb({message: 'Error getting root', data: err})
     } else {
-      cb(currentPath)
+      cb(null, currentPath)
     }
   })
 }
 
 function init(cb) {
-  fs.mkdir(process.cwd() + '/' + dataDirName, err => {
-    if (err) { cb(err); return }
+  const dataDirPath = path.join(process.cwd(), dataDirName)
+  const configPath = process.cwd() + '/' + configName
 
-    const configPath = process.cwd() + '/' + configName
+  let dataDirExists
 
-    fs.createReadStream(defaultConfigPath)
-      .pipe(fs.createWriteStream(configPath))
-      .on('error', streamError => {
-        cb(streamError)
-      })
-      .on('end', () => {
-        cb()
-      })
+  fs.mkdir(dataDirPath, err => {
+    if (err) {
+      if (err.code === 'EEXIST') {
+        dataDirExists = true
+      } else {
+        cb({message: 'Error creating data directory', data: err})
+        return
+      }
+    }
+
+    fs.stat(configPath, (existsError, stat) => {
+      if (existsError && existsError.code === 'ENOENT') {
+        // config doesn't exist already. copy default config
+        fsExtra.copy(defaultConfigPath, configPath, copyErr => {
+          if (copyErr) {
+            cb({message: 'Error creating project config', data: copyErr})
+          } else {
+            cb()
+          }
+        })
+      } else if (existsError) {
+        // error checking config file existance
+        cb({message: 'Error creating project config', data: existsError})
+      } else {
+        // config file exists
+        if (dataDirExists) {
+          cb({message: 'Project already initialized'})
+        } else {
+          // created a data directory, but not the config file
+          cb()
+        }
+      }
+    })
   })
 }
 
 export default {
   dataDirName: dataDirName,
   configName: configName,
-  getProjectRoot: getProjectRoot,
+  getRoot: getRoot,
   init: init
 }

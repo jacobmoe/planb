@@ -2,7 +2,7 @@
   "endpoints": [
     {
       "port": 5000,
-      "urls": []
+      "urls": [],
       "default": true
     }
   ]

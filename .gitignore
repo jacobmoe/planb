@@ -2,3 +2,6 @@ node_modules
 .DS_Store
 .tern-port
 npm-debug.log
+dist
+.planb.d.test
+.planb.json.test
