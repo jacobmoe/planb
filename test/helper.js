@@ -8,7 +8,8 @@ var rimraf = require('rimraf')
 global.SRC_DIR = 'dist'
 global.assert = require('chai').assert
 
-var utils = require('../' + SRC_DIR + '/lib/storage/utils')
+var srcPath = '../' + SRC_DIR
+var projects = require(srcPath + '/lib/storage/projects')
 
 global.assert.fileExists = function(path) {
   try {
@@ -22,7 +23,7 @@ global.assert.fileExists = function(path) {
 
 global.assert.fileDoesNotExist = function(path) {
   var message = 'fileDoesNotExist asserted, but it does: ' + path
-  var pass;
+  var pass
 
   try {
     fs.statSync(path)
@@ -44,7 +45,7 @@ global.assert.fileHasContent = function(path, expected) {
     else pass = false
 
   } catch (error) {
-    pass = true;
+    pass = true
     global.assert(false, "expected file to have content but file does't exist")
   }
 
@@ -59,9 +60,30 @@ global.assert.fileHasContent = function(path, expected) {
 }
 
 global.cleanup = function (done) {
-  rimraf(utils.dataPath, function(err) {
-    if (err) console.log('error removing data directory', err)
-
+  if (!projects.dataDirName || !projects.configName) {
+    console.log('error cleaning up')
     done()
+    return
+  }
+
+  projects.getProjectRoot(function(rootPath) {
+    if (rootPath) {
+      var dataDirPath = rootPath + '/' + projects.dataDirName
+      var configPath = rootPath + '/' + projects.configName
+
+      rimraf(dataDirPath, function(err) {
+        if (err) console.log('error removing data directory', err)
+
+        rimraf(configPath, function(configErr) {
+          if (configErr) {
+            console.log('error removing config file', configErr)
+          }
+
+          done()
+        })
+      })
+    } else {
+      done()
+    }
   })
 }

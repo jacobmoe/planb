@@ -28,7 +28,6 @@ describe('projects', function(){
     context('project not initialized', function() {
       it('returns a null path', function(done) {
         projects.getProjectRoot(function(path) {
-          console.log("==========", path)
           assert.isNull(path)
           done()
         })
