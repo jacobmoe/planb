@@ -1,11 +1,10 @@
 {
   "name": "planb",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Serve essential API data locally when the API is down",
   "main": "dist/index.js",
   "scripts": {
-    "test": "./node_modules/.bin/gulp build && ./node_modules/.bin/mocha",
-    "postinstall": "./node_modules/.bin/gulp build"
+    "test": "./node_modules/.bin/gulp build && ./node_modules/.bin/mocha"
   },
   "bin": {
     "planb": "./dist/index.js"
