@@ -6,7 +6,11 @@ if (process.env.NODE_ENV === 'test') {
   dataDirName = dataDirName + '.test'
 }
 
-const dataPath = process.env.HOME + '/' + dataDirName + '/'
+function getUserHome() {
+  return process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME']
+}
+
+const dataPath = getUserHome() + '/' + dataDirName + '/'
 
 function createDir(path, cb) {
   fs.mkdir(path, err => {
