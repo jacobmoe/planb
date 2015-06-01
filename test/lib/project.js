@@ -4,6 +4,7 @@ import path from 'path'
 // variables in ES6 imports. how?
 const srcPath = '../../' + SRC_DIR
 const project = require(srcPath + '/lib/project')
+const config = require(srcPath + '/lib/config')
 const storage = require(srcPath + '/lib/storage')
 
 describe('controller: project', () => {
@@ -16,14 +17,14 @@ describe('controller: project', () => {
         fs.readdir(process.cwd(), (err, files) => {
           assert.notOk(err)
           assert.equal(files.indexOf(storage.projects.dataDirName), -1)
-          assert.equal(files.indexOf(storage.projects.configName), -1)
+          assert.equal(files.indexOf(config.configName), -1)
 
           project.init(initErr => {
             fs.readdir(process.cwd(), (err, files) => {
               assert.notOk(initErr)
               assert.notOk(err)
               assert.notEqual(files.indexOf(storage.projects.dataDirName), -1)
-              assert.notEqual(files.indexOf(storage.projects.configName), -1)
+              assert.notEqual(files.indexOf(config.configName), -1)
 
               done()
             })
@@ -36,14 +37,14 @@ describe('controller: project', () => {
           "endpoints": [
             {
               "port": 5000,
-              "urls": [],
+              "get": [],
               "default": true
             }
           ]
         }
 
         project.init(initErr => {
-          fs.readFile(storage.projects.configName, 'utf8', (err, data) => {
+          fs.readFile(config.configName, 'utf8', (err, data) => {
             assert.notOk(err)
 
             assert.deepEqual(JSON.parse(data), expected)

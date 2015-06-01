@@ -17,13 +17,6 @@ describe('storage/projects', () => {
     })
   })
 
-  describe('configName', () => {
-    it('returns the test config file name', done => {
-      assert.equal(projects.configName, '.planb.json.test')
-      done()
-    })
-  })
-
   describe('getRoot', () => {
     context('project not initialized', () => {
       it('returns a null path', done => {
@@ -110,26 +103,6 @@ describe('storage/projects', () => {
     })
   })
 
-  describe('createConfig', () => {
-    it('creates a config file in current directory', done => {
-      fs.readdir(process.cwd(), (err, files) => {
-        assert.notOk(err)
-        assert.equal(files.indexOf(projects.configName), -1)
-
-        projects.createConfig(err => {
-          assert.notOk(err)
-
-          fs.readdir(process.cwd(), (err, files) => {
-            assert.notOk(err)
-            assert.isAbove(files.indexOf(projects.configName), -1)
-            done()
-          })
-        })
-      })
-    })
-  })
-
-
   describe('checkPwdDataDir', () => {
     it('checks if current directory has a data dir', done => {
       projects.checkPwdDataDir((err, exists) => {
@@ -148,25 +121,5 @@ describe('storage/projects', () => {
       })
     })
   })
-
-  describe('checkPwdConfig', () => {
-    it('checks if current directory has a config file', done => {
-      projects.checkPwdConfig((err, exists) => {
-        assert.isNull(err)
-        assert.isFalse(exists)
-
-        projects.createConfig(err => {
-          assert.notOk(err)
-
-          projects.checkPwdConfig((err, exists) => {
-            assert.isNull(err)
-            assert.isTrue(exists)
-            done()
-          })
-        })
-      })
-    })
-  })
-
 
 })

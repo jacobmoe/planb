@@ -1,6 +1,7 @@
 import path from 'path'
 
 import storage from './storage'
+import config from './config'
 
 const projects = storage.projects
 const endpoints = storage.endpoints
@@ -12,7 +13,7 @@ function init(cb) {
       return
     }
 
-    projects.checkPwdConfig((err, configExists) => {
+    config.checkPwd((err, configExists) => {
       if (err) {
         cb({message: 'Error initializing project', data: err})
         return
@@ -24,7 +25,7 @@ function init(cb) {
         projects.createDataDir(function(err) {
           if (err) {cb(err); return}
 
-          projects.createConfig(function(err) {
+          config.create(function(err) {
             if (err) {cb(err); return}
 
             cb()
@@ -42,6 +43,7 @@ function addEndpoint(url, cb) {
     } else {
       const dirPath = path.join(rootPath, projects.dataDirName)
 
+      // TODO add endpoint to config
       endpoints.create(dirPath, url, err => {
         if (err) {cb(err); return}
 
