@@ -5,7 +5,7 @@ import fs from 'fs'
 // can't use variable import names for ES6 import statements?
 const srcPath = '../../' + SRC_DIR
 const manager = require(srcPath + '/lib/manager.js')
-const utils = require(srcPath + '/lib/storage/utils')
+const utils = require(srcPath + '/lib/utils')
 
 const stdout = testConsole.stdout
 

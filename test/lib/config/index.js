@@ -3,6 +3,8 @@ import fs from 'fs'
 // variables in ES6 imports. how?
 const srcPath = '../../../' + SRC_DIR
 const config = require(srcPath + '/lib/config')
+const defaults = require(srcPath + '/lib/config/defaults')
+const project = require(srcPath + '/lib/project')
 
 describe('config/index', () => {
   before(cleanup)
@@ -53,4 +55,27 @@ describe('config/index', () => {
     })
   })
 
+  describe('read', () => {
+    context('project not initialized', () => {
+      it('returns an error', done => {
+        config.read((err, data) => {
+          assert.isObject(err)
+          assert.notOk(data)
+          done()
+        })
+      })
+    })
+
+    context('project is initialized', () => {
+      beforeEach(project.init)
+
+      it('returns the config file data', done => {
+        config.read((err, data) => {
+          assert.isNull(err)
+          assert.deepEqual(data, defaults.configData)
+          done()
+        })
+      })
+    })
+  })
 })

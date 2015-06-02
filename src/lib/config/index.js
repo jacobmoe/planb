@@ -1,32 +1,32 @@
-import fs from 'fs-extra'
 import path from 'path'
+
 import packageJson from '../../../package.json'
 import utils from '../utils'
+import projects from '../storage/projects'
+
+import * as defaults from './defaults'
 
 const name = packageJson.name
 let configName = '.' + name + '.json'
-
-const defaultPort = 5000
-const defaultAction = "get"
-const actions = ["get", "post", "put", "delete"]
-
-const defaultEndpoint = {
-  "port": defaultPort,
-  [defaultAction]: [],
-  "default": true
-}
 
 if (process.env.NODE_ENV === 'test') {
   configName = configName + '.test'
 }
 
-const defaultConfigPath = path.join(
-  __dirname,
-  '../../../assets/json/defaultConfig.json'
-)
+/* get config file object */
+function read(cb) {
+  projects.getRoot((err, rootPath) => {
+    if (err) { cb(err); return }
+    if (!rootPath) { cb({message: 'No project root found'}); return }
 
+    const configPath = path.join(rootPath, configName)
+    utils.readJsonFile(configPath, cb)
+  })
+}
+
+/* check if config file exists in current directory */
 function checkPwd(cb) {
-  const configPath = process.cwd() + '/' + configName
+  const configPath = path.join(process.cwd(), configName)
 
   utils.fileExists(configPath, cb)
 }
@@ -36,9 +36,9 @@ function checkPwd(cb) {
  *
  * Nothing is returned is file created successfully,
  * or if file already exists
-*/
+ */
 function create(cb) {
-  const configPath = process.cwd() + '/' + configName
+  const configPath = path.join(process.cwd(), configName)
 
   checkPwd(function(err, exists) {
     if (exists) {
@@ -46,7 +46,7 @@ function create(cb) {
     } else if (err) {
       cb({message: "Error creating project config", data: err})
     } else {
-      fs.copy(defaultConfigPath, configPath, err => {
+      utils.writeJsonFile(configPath, defaults.configData, err => {
         if (err) {
           cb({message: 'Error creating project config', data: err})
         } else {
@@ -57,13 +57,14 @@ function create(cb) {
   })
 }
 
-function getEndpoint(port) {
-  const endpoints = packageJson.endpoints
+/*
+ * Return an endpoint from configData
+ *
+ * Find
+ */
+function getEndpoint(port, configData) {
+  const endpoints = configData.endpoints
   let endpoint
-
-  if (!endpoints || !endpoints.length) {
-    return getDefaultEndpoint()
-  }
 
   if (port) {
     endpoints.forEach(ep => {
@@ -74,8 +75,13 @@ function getEndpoint(port) {
     })
   }
 
+  if (!endpoints || !endpoints.length) {
+    return getDefaultEndpoint(configData)
+  }
+
+
   if (!endpoint) {
-    endpoint = getDefaultEndpoint()
+    endpoint = getDefaultEndpoint(configData)
   }
 
   return endpoint
@@ -84,16 +90,16 @@ function getEndpoint(port) {
 /*
  * Return default endpoint
  *
- * Check config file for endpoint with the default flag
+ * Check config data for endpoint with the default flag
  * If not set, check for the first endpoint
  * If no endpoints, return the default
 */
-function getDefaultEndpoint() {
-  const endpoints = packageJson.endpoints
+function getDefaultEndpoint(configData) {
+  const endpoints = configData.endpoints
   let defaultEp
 
   if (!endpoints || !endpoints.length) {
-    return defaultEndpoint
+    return defaults.endpoint
   }
 
   endpoints.forEach(ep => {
@@ -109,31 +115,58 @@ function getDefaultEndpoint() {
   }
 
   if (!defaultEp) {
-    defaultEp = defaultEndpoint
+    defaultEp = defaults.endpoint
   }
 
   return defaultEp
 }
 
 function validAction(action) {
-  return actions.indexOf(action) > -1
+  return defaults.allowedActions.indexOf(action) > -1
+}
+
+function addEndpointForPort(endpoints, url, opts) {
+  let endpointIndex
+
+  endpoints.forEach((ep, index) => {
+    if (ep.port === opts.port) {
+      endpointIndex = ep
+      return
+    }
+  })
+
+  if (!endpointIndex) {
+    endpoints.push()
+  }
+
+  return endpoints
 }
 
 function addEndpoint(url, opts, cb) {
-  const endpoint = getEndpoint(opts.port)
-  let action = opts.action || defaultAction
+  read((err, configData) => {
+    if (err) { cb(err); return }
 
-  if (!validAction(action)) action = defaultAction
+    const endpoints = configData.endpoints || []
 
-  if (!endpoint[action] || !Array.isArray(endpoint[action])) {
-    endpoint[action] = []
-  }
+    if (opts.port) {
+      endpoints = addEndpointForPort(endpoints, url, opts)
+    } else {
 
-  endpoint[action].push(url)
+    }
+
+    if (!validAction(action)) action = defaultAction
+
+    if (!endpoint[action] || !Array.isArray(endpoint[action])) {
+      endpoint[action] = []
+    }
+
+    endpoint[action].push(url)
+  })
 }
 
 export default {
   create: create,
   checkPwd: checkPwd,
-  configName: configName
+  configName: configName,
+  read: read
 }

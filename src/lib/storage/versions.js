@@ -1,7 +1,7 @@
 import fs from 'fs'
 import async from 'async'
 
-import utils from './utils'
+import utils from '../utils'
 
 export function create(endpointUrl, data, cb) {
   const name = utils.endpointNameFromPath(endpointUrl)

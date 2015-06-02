@@ -2,7 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import async from 'async'
 
-import utils from './utils'
+import utils from '../utils.js'
 
 export function create(dataPath, url, cb) {
   const name = utils.endpointNameFromPath(url)

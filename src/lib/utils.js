@@ -39,10 +39,33 @@ function fileExists(path, cb) {
   })
 }
 
+function writeJsonFile(path, data, cb) {
+  const json = JSON.stringify(data, null, 2)
+
+  fs.writeFile(path, json, 'utf8', cb)
+}
+
+function readJsonFile(path, cb) {
+  fs.readFile(path, 'utf8', (err, data) => {
+    if (err) {
+      cb(err)
+      return
+    }
+
+    try {
+      cb(null, JSON.parse(data))
+    } catch (err) {
+      cb({message: 'Must be a JSON file'})
+    }
+  })
+}
+
 export default {
   createDir: createDir,
   endpointNameFromPath: endpointNameFromPath,
   pathFromEndpointName: pathFromEndpointName,
   largest: largest,
-  fileExists: fileExists
+  fileExists: fileExists,
+  writeJsonFile: writeJsonFile,
+  readJsonFile: readJsonFile
 }

@@ -7,7 +7,7 @@ var request = require('request')
 var srcPath = '../../' + SRC_DIR
 var server = require(srcPath + '/lib/server.js')
 var manager = require(srcPath + '/lib/manager.js')
-var utils = require(srcPath + '/lib/storage/utils')
+var utils = require(srcPath + '/lib/utils')
 
 describe('server', function(){
   afterEach(cleanup)

@@ -1,9 +1,0 @@
-{
-  "endpoints": [
-    {
-      "port": 5000,
-      "get": [],
-      "default": true
-    }
-  ]
-}
