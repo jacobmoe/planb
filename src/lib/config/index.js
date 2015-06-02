@@ -57,87 +57,57 @@ function create(cb) {
   })
 }
 
-/*
- * Return an endpoint from configData
- *
- * Find
- */
-function getEndpoint(port, configData) {
-  const endpoints = configData.endpoints
-  let endpoint
-
-  if (port) {
-    endpoints.forEach(ep => {
-      if (ep.port === port) {
-        endpoint = ep
-        return
-      }
-    })
-  }
-
-  if (!endpoints || !endpoints.length) {
-    return getDefaultEndpoint(configData)
-  }
-
-
-  if (!endpoint) {
-    endpoint = getDefaultEndpoint(configData)
-  }
-
-  return endpoint
-}
-
-/*
- * Return default endpoint
- *
- * Check config data for endpoint with the default flag
- * If not set, check for the first endpoint
- * If no endpoints, return the default
-*/
-function getDefaultEndpoint(configData) {
-  const endpoints = configData.endpoints
-  let defaultEp
-
-  if (!endpoints || !endpoints.length) {
-    return defaults.endpoint
-  }
-
-  endpoints.forEach(ep => {
-    if (ep.default) {
-      defaultEp = ep
-      return
-    }
-  })
-
-  if (!defaultEp) {
-    const endpoint = endpoints[0] || {}
-    defaultEp = endpoint.port
-  }
-
-  if (!defaultEp) {
-    defaultEp = defaults.endpoint
-  }
-
-  return defaultEp
-}
-
 function validAction(action) {
   return defaults.allowedActions.indexOf(action) > -1
 }
 
-function addEndpointForPort(endpoints, url, opts) {
+function newEndpoint(opts) {
+  const port = opts.port || defaults.port
+  const action = validAction(opts.action) ? opts.action : defaults.action
+
+  return { port: port, [action]: [] }
+}
+
+function addEndpointForPort(endpoints, url, port, opts) {
+  const action = validAction(opts.action) ? opts.action : defaults.action
   let endpointIndex
 
   endpoints.forEach((ep, index) => {
-    if (ep.port === opts.port) {
-      endpointIndex = ep
+    if (ep.port === port) {
+      endpointIndex = index
       return
     }
   })
 
   if (!endpointIndex) {
-    endpoints.push()
+    endpoints.push(newEndpoint(opts))
+    endpointIndex = endpoints.length - 1
   }
+
+  endpoints[endpointIndex][action].push(url)
+
+  return endpoints
+}
+
+function addEndpointForDefault(endpoints, url, opts) {
+  const action = validAction(opts.action) ? opts.action : defaults.action
+  let endpointIndex
+
+  endpoints.forEach((ep, index) => {
+    if (ep.default) {
+      endpointIndex = index
+      return
+    }
+  })
+
+  if (!endpointIndex && endpoints.length) {
+    endpointIndex = 0
+  } else {
+    endpoints.push(newEndpoint(opts))
+    endpointIndex = 0
+  }
+
+  endpoints[endpointIndex][action].push(url)
 
   return endpoints
 }
@@ -149,18 +119,11 @@ function addEndpoint(url, opts, cb) {
     const endpoints = configData.endpoints || []
 
     if (opts.port) {
-      endpoints = addEndpointForPort(endpoints, url, opts)
+      endpoints = addEndpointForPort(endpoints, url, opts.port, opts)
     } else {
-
+      endpoints = addEndpointForDefault(endpoints, url, opts)
     }
 
-    if (!validAction(action)) action = defaultAction
-
-    if (!endpoint[action] || !Array.isArray(endpoint[action])) {
-      endpoint[action] = []
-    }
-
-    endpoint[action].push(url)
   })
 }
 
