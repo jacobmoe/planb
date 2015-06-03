@@ -46,21 +46,26 @@ function writeJsonFile(path, data, cb) {
 }
 
 function readJsonFile(path, cb) {
-  fs.readFile(path, 'utf8', (err, data) => {
+  fs.readFile(path, 'utf8', (err, json) => {
     if (err) {
       cb(err)
       return
     }
 
+    let data
+
     try {
-      cb(null, JSON.parse(data))
+      data = JSON.parse(json)
     } catch (err) {
-      cb({message: 'Must be a JSON file'})
+      cb({message: 'Must be a valid JSON file'})
+      return
     }
+
+    cb(null, data)
   })
 }
 
-function findBy(arr, opts) {
+function findIndexBy(arr, opts) {
   const keys = Object.keys(opts)
 
   function match(item) {
@@ -77,10 +82,20 @@ function findBy(arr, opts) {
   }
 
   for (let i = 0; i < arr.length; i++) {
-    if (match(arr[i])) return arr[i]
+    if (match(arr[i])) return i
   }
 
   return null
+}
+
+function findBy(arr, opts) {
+  const index = findIndexBy(arr, opts)
+
+  if (index) {
+    return arr[index]
+  } else {
+    return null
+  }
 }
 
 export default {
@@ -91,5 +106,6 @@ export default {
   fileExists: fileExists,
   writeJsonFile: writeJsonFile,
   readJsonFile: readJsonFile,
+  findIndexBy: findIndexBy,
   findBy: findBy
 }

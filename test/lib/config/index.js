@@ -113,6 +113,47 @@ describe('config/index', () => {
       })
 
       it('adds url to existing item if port present', done => {
+        opts.port = 5000
+        opts.action = "get"
+
+        config.addEndpoint(url, opts, err => {
+          assert.notOk(err)
+
+          config.read((err, configData) => {
+            assert.notOk(err)
+
+            assert.equal(configData.endpoints.length, 1)
+            assert.equal(configData.endpoints[0].port, opts.port)
+            assert.equal(configData.endpoints[0][opts.action].length, 1)
+            assert.equal(configData.endpoints[0][opts.action][0], url)
+
+            config.addEndpoint(url + '/more-stuff', opts, err => {
+              assert.notOk(err)
+
+              config.read((err, configData) => {
+                assert.notOk(err)
+
+                assert.equal(configData.endpoints.length, 1)
+                assert.equal(configData.endpoints[0].port, opts.port)
+                assert.equal(configData.endpoints[0][opts.action].length, 2)
+                assert.include(configData.endpoints[0][opts.action], url)
+                assert.include(
+                  configData.endpoints[0][opts.action],
+                  url + '/more-stuff'
+                )
+
+                done()
+              })
+            })
+          })
+        })
+      })
+
+      it('adds url to existing item and sets new action', done => {
+        done()
+      })
+
+      it('will not add the same endpoint to the same port item', done => {
         done()
       })
 

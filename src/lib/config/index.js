@@ -86,16 +86,10 @@ function newEndpoint(opts) {
 
 function addEndpointForPort(endpoints, url, port, opts) {
   const action = validAction(opts.action) ? opts.action : defaults.action
-  let endpointIndex
 
-  endpoints.forEach((ep, index) => {
-    if (ep.port === port) {
-      endpointIndex = index
-      return
-    }
-  })
+  let endpointIndex = utils.findIndexBy(endpoints, {port: port})
 
-  if (!endpointIndex) {
+  if (endpointIndex !== 0 && !endpointIndex) {
     endpoints.push(newEndpoint(opts))
     endpointIndex = endpoints.length - 1
   }
