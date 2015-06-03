@@ -40,7 +40,7 @@ function checkPwd(cb) {
 function create(cb) {
   const configPath = path.join(process.cwd(), configName)
 
-  checkPwd(function(err, exists) {
+  checkPwd((err, exists) => {
     if (exists) {
       cb()
     } else if (err) {
@@ -54,6 +54,22 @@ function create(cb) {
         }
       })
     }
+  })
+}
+
+function update(data, cb) {
+  projects.getRoot((err, rootPath) => {
+    if (err) { cb(err); return }
+
+    const configPath = path.join(rootPath, configName)
+
+    utils.writeJsonFile(configPath, data, err => {
+      if (err) {
+        cb({message: 'Error updating project config', data: err})
+      } else {
+        cb()
+      }
+    })
   })
 }
 
@@ -116,7 +132,7 @@ function addEndpoint(url, opts, cb) {
   read((err, configData) => {
     if (err) { cb(err); return }
 
-    const endpoints = configData.endpoints || []
+    let endpoints = configData.endpoints || []
 
     if (opts.port) {
       endpoints = addEndpointForPort(endpoints, url, opts.port, opts)
@@ -124,12 +140,16 @@ function addEndpoint(url, opts, cb) {
       endpoints = addEndpointForDefault(endpoints, url, opts)
     }
 
+    configData.endpoints = endpoints
+
+    update(configData, cb)
   })
 }
 
 export default {
   create: create,
+  read: read,
   checkPwd: checkPwd,
   configName: configName,
-  read: read
+  addEndpoint: addEndpoint
 }

@@ -60,6 +60,29 @@ function readJsonFile(path, cb) {
   })
 }
 
+function findBy(arr, opts) {
+  const keys = Object.keys(opts)
+
+  function match(item) {
+    let doesMatch = keys.length > 0
+
+    keys.forEach(key => {
+      if (opts[key] !== item[key]) {
+        doesMatch = false
+        return
+      }
+    })
+
+    return doesMatch
+  }
+
+  for (let i = 0; i < arr.length; i++) {
+    if (match(arr[i])) return arr[i]
+  }
+
+  return null
+}
+
 export default {
   createDir: createDir,
   endpointNameFromPath: endpointNameFromPath,
@@ -67,5 +90,6 @@ export default {
   largest: largest,
   fileExists: fileExists,
   writeJsonFile: writeJsonFile,
-  readJsonFile: readJsonFile
+  readJsonFile: readJsonFile,
+  findBy: findBy
 }
