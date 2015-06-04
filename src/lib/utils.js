@@ -69,16 +69,20 @@ function findIndexBy(arr, opts) {
   const keys = Object.keys(opts)
 
   function match(item) {
-    let doesMatch = keys.length > 0
+    if (typeof opts === 'function') {
+      return opts(item)
+    } else {
+      let doesMatch = keys.length > 0
 
-    keys.forEach(key => {
-      if (opts[key] !== item[key]) {
-        doesMatch = false
-        return
-      }
-    })
+      keys.forEach(key => {
+        if (opts[key] !== item[key]) {
+          doesMatch = false
+          return
+        }
+      })
 
-    return doesMatch
+      return doesMatch
+    }
   }
 
   for (let i = 0; i < arr.length; i++) {

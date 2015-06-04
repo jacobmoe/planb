@@ -84,31 +84,37 @@ function newEndpoint(opts) {
   return { port: port, [action]: [] }
 }
 
+function addEndpointToAction(endpoints, index, action, url) {
+  if (!endpoints[index][action]) {
+    endpoints[index][action] = []
+  }
+
+  if (endpoints[index][action].indexOf(url) < 0) {
+    endpoints[index][action].push(url)
+  }
+
+  return endpoints
+}
+
 function addEndpointForPort(endpoints, url, port, opts) {
   const action = validAction(opts.action) ? opts.action : defaults.action
 
-  let endpointIndex = utils.findIndexBy(endpoints, {port: port})
+  let endpointIndex = utils.findIndexBy(endpoints, item => {
+    return item.port == port
+  })
 
   if (endpointIndex !== 0 && !endpointIndex) {
     endpoints.push(newEndpoint(opts))
     endpointIndex = endpoints.length - 1
   }
 
-  endpoints[endpointIndex][action].push(url)
-
-  return endpoints
+  return addEndpointToAction(endpoints, endpointIndex, action, url)
 }
 
 function addEndpointForDefault(endpoints, url, opts) {
   const action = validAction(opts.action) ? opts.action : defaults.action
-  let endpointIndex
 
-  endpoints.forEach((ep, index) => {
-    if (ep.default) {
-      endpointIndex = index
-      return
-    }
-  })
+  let endpointIndex = utils.findIndexBy(endpoints, {default: true})
 
   if (!endpointIndex && endpoints.length) {
     endpointIndex = 0
@@ -117,16 +123,30 @@ function addEndpointForDefault(endpoints, url, opts) {
     endpointIndex = 0
   }
 
-  endpoints[endpointIndex][action].push(url)
-
-  return endpoints
+  return addEndpointToAction(endpoints, endpointIndex, action, url)
 }
 
+function cleanUrl(url) {
+  url = url || ''
+
+  return url.replace(/^https?:\/\//, '')
+}
+
+/*
+ * addEndpoint
+ *
+ * Takes a url and options and adds the url to the config file
+ * Options: action, port
+ * First try to add the url to the config item that matches the
+ * supplied port number. If not found, a new config item is created.
+ * The udpated data is then written back to the file
+ */
 function addEndpoint(url, opts, cb) {
   read((err, configData) => {
     if (err) { cb(err); return }
 
     let endpoints = configData.endpoints || []
+    url = cleanUrl(url)
 
     if (opts.port) {
       endpoints = addEndpointForPort(endpoints, url, opts.port, opts)
@@ -140,10 +160,15 @@ function addEndpoint(url, opts, cb) {
   })
 }
 
+function removeEndpoint() {
+
+}
+
 export default {
   create: create,
   read: read,
   checkPwd: checkPwd,
   configName: configName,
-  addEndpoint: addEndpoint
+  addEndpoint: addEndpoint,
+  cleanUrl: cleanUrl
 }
