@@ -9,10 +9,14 @@ function createDir(path, cb) {
   })
 }
 
-function endpointNameFromPath(path) {
-  const name = path.replace(/^https?:\/\//, '')
+function cleanUrl(url) {
+  url = url || ''
 
-  return name.replace(/\//g, ':')
+  return url.replace(/^https?:\/\//, '')
+}
+
+function endpointNameFromPath(path) {
+  return cleanUrl(path).replace(/\//g, ':')
 }
 
 function pathFromEndpointName(name) {
@@ -106,6 +110,7 @@ export default {
   createDir: createDir,
   endpointNameFromPath: endpointNameFromPath,
   pathFromEndpointName: pathFromEndpointName,
+  cleanUrl: cleanUrl,
   largest: largest,
   fileExists: fileExists,
   writeJsonFile: writeJsonFile,

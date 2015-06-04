@@ -34,8 +34,8 @@ function checkPwd(cb) {
 /*
  * Create project config file
  *
- * Nothing is returned is file created successfully,
- * or if file already exists
+ * Nothing is returned if file created successfully,
+ * or if file already exists. Otherwise, an error is returned.
  */
 function create(cb) {
   const configPath = path.join(process.cwd(), configName)
@@ -77,6 +77,12 @@ function validAction(action) {
   return defaults.allowedActions.indexOf(action) > -1
 }
 
+function defaultEndpointIndex(endpoints) {
+  let index = utils.findIndexBy(endpoints, {default: true})
+
+  return index || 0
+}
+
 function newEndpoint(opts) {
   const port = opts.port || defaults.port
   const action = validAction(opts.action) ? opts.action : defaults.action
@@ -113,32 +119,29 @@ function addEndpointForPort(endpoints, url, port, opts) {
 
 function addEndpointForDefault(endpoints, url, opts) {
   const action = validAction(opts.action) ? opts.action : defaults.action
+  let endpointIndex
 
-  let endpointIndex = utils.findIndexBy(endpoints, {default: true})
-
-  if (!endpointIndex && endpoints.length) {
-    endpointIndex = 0
-  } else {
+  if (!endpoints.length) {
     endpoints.push(newEndpoint(opts))
     endpointIndex = 0
+  } else {
+    endpointIndex = defaultEndpointIndex(endpoints)
   }
 
   return addEndpointToAction(endpoints, endpointIndex, action, url)
 }
 
-function cleanUrl(url) {
-  url = url || ''
-
-  return url.replace(/^https?:\/\//, '')
-}
-
 /*
  * addEndpoint
  *
- * Takes a url and options and adds the url to the config file
+ * Accepts a url and options. Adds the url to the config file
+ *
  * Options: action, port
+ *
  * First try to add the url to the config item that matches the
  * supplied port number. If not found, a new config item is created.
+ * Once we have the config item, first try to add the url to the
+ * given action. If it doesn't exist, create a new one.
  * The udpated data is then written back to the file
  */
 function addEndpoint(url, opts, cb) {
@@ -146,7 +149,7 @@ function addEndpoint(url, opts, cb) {
     if (err) { cb(err); return }
 
     let endpoints = configData.endpoints || []
-    url = cleanUrl(url)
+    url = utils.cleanUrl(url)
 
     if (opts.port) {
       endpoints = addEndpointForPort(endpoints, url, opts.port, opts)
@@ -160,8 +163,66 @@ function addEndpoint(url, opts, cb) {
   })
 }
 
-function removeEndpoint() {
+function removeEndpointFromAction(endpoints, index, action, url) {
+  let urls = endpoints[index][action]
 
+  if (!urls || !urls.length) return null
+
+  urls = urls.map(item => {
+    return utils.cleanUrl(item)
+  })
+
+  const urlIndex = urls.indexOf(utils.cleanUrl(url))
+
+  if (urlIndex < 0) return null
+
+  urls.splice(urlIndex, 1)
+
+  return urls
+}
+
+/*
+ * removeEndpoint
+ *
+ * Accepts a url and options. Removes the url from the config file.
+ *
+ * Options: action, port
+ *
+ * Remove url from the default config item and action if options
+ * not supplied. Otherwise, by port and/or action and remove.
+ */
+function removeEndpoint(url, opts, cb) {
+  read((err, configData) => {
+    if (err) { cb(err); return }
+
+    const endpoints = configData.endpoints
+    const action = opts.action || defaults.action
+    let endpointIndex
+
+    if (!endpoints || !endpoints.length) {
+      cb({message: 'No endpoints in config'})
+      return
+    }
+
+    url = utils.cleanUrl(url)
+
+    if (opts.port) {
+      endpointIndex = utils.findIndexBy(endpoints, item => {
+        return item.port == opts.port
+      })
+    } else {
+      endpointIndex = defaultEndpointIndex(endpoints)
+    }
+
+    if (endpointIndex !== 0 && !endpointIndex) {
+      cb({message: 'Endpoint not found in config'})
+      return
+    }
+
+    removeEndpointFromAction(endpoints, endpointIndex, action, url)
+
+    update(configData, cb)
+  })
 }
 
 export default {
@@ -170,5 +231,5 @@ export default {
   checkPwd: checkPwd,
   configName: configName,
   addEndpoint: addEndpoint,
-  cleanUrl: cleanUrl
+  removeEndpoint: removeEndpoint
 }

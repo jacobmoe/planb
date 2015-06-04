@@ -105,7 +105,7 @@ describe('config/index', () => {
 
             const item = utils.findBy(configData.endpoints, {port: opts.port})
 
-            assert.include(item[opts.action], config.cleanUrl(url))
+            assert.include(item[opts.action], utils.cleanUrl(url))
 
             done()
           })
@@ -125,7 +125,7 @@ describe('config/index', () => {
             assert.equal(configData.endpoints.length, 1)
             assert.equal(configData.endpoints[0].port, opts.port)
             assert.equal(configData.endpoints[0][opts.action].length, 1)
-            assert.equal(configData.endpoints[0][opts.action][0], config.cleanUrl(url))
+            assert.equal(configData.endpoints[0][opts.action][0], utils.cleanUrl(url))
 
             config.addEndpoint(url + '/more-stuff', opts, err => {
               assert.notOk(err)
@@ -136,10 +136,10 @@ describe('config/index', () => {
                 assert.equal(configData.endpoints.length, 1)
                 assert.equal(configData.endpoints[0].port, opts.port)
                 assert.equal(configData.endpoints[0][opts.action].length, 2)
-                assert.include(configData.endpoints[0][opts.action], config.cleanUrl(url))
+                assert.include(configData.endpoints[0][opts.action], utils.cleanUrl(url))
                 assert.include(
                   configData.endpoints[0][opts.action],
-                  config.cleanUrl(url + '/more-stuff')
+                  utils.cleanUrl(url + '/more-stuff')
                 )
 
                 done()
@@ -168,8 +168,8 @@ describe('config/index', () => {
               assert.equal(configData.endpoints[0].get.length, 1)
               assert.equal(configData.endpoints[0].put.length, 1)
 
-              assert.include(configData.endpoints[0].get[0], config.cleanUrl(url))
-              assert.include(configData.endpoints[0].put[0], config.cleanUrl(url + '/more'))
+              assert.include(configData.endpoints[0].get[0], utils.cleanUrl(url))
+              assert.include(configData.endpoints[0].put[0], utils.cleanUrl(url + '/more'))
 
               done()
             })
@@ -196,7 +196,7 @@ describe('config/index', () => {
 
               assert.include(
                 configData.endpoints[0][opts.action][0],
-                config.cleanUrl(url)
+                utils.cleanUrl(url)
               )
 
               done()
@@ -223,7 +223,7 @@ describe('config/index', () => {
             assert.equal(configData.endpoints[1].post.length, 1)
             assert.include(
               configData.endpoints[1][opts.action][0],
-              config.cleanUrl(url)
+              utils.cleanUrl(url)
             )
 
             done()
@@ -269,5 +269,35 @@ describe('config/index', () => {
       })
     })
   })
+
+  describe('removeEndpoint', () => {
+    const url = 'http://test-endpoint.com/api/v1/stuff/43'
+
+    context('project not initialized', () => {
+      it('returns an error', done => {
+        config.removeEndpoint(url, {}, err => {
+          assert.isObject(err)
+          done()
+        })
+      })
+    })
+
+    context('project is initialized', () => {
+      beforeEach(project.init)
+
+      it('returns error if url not found', done => {
+        done()
+      })
+
+      it('removes url from default port and action if not supplied', done => {
+        done()
+      })
+
+      it('removes url from given port and action', done => {
+        done()
+      })
+    })
+  })
+
 
 })
