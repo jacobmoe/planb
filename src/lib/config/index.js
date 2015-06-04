@@ -145,6 +145,8 @@ function addEndpointForDefault(endpoints, url, opts) {
  * The udpated data is then written back to the file
  */
 function addEndpoint(url, opts, cb) {
+  opts = opts || {}
+
   read((err, configData) => {
     if (err) { cb(err); return }
 
@@ -192,12 +194,14 @@ function removeEndpointFromAction(endpoints, index, action, url) {
  * not supplied. Otherwise, by port and/or action and remove.
  */
 function removeEndpoint(url, opts, cb) {
+  opts = opts || {}
+
   read((err, configData) => {
     if (err) { cb(err); return }
 
     const endpoints = configData.endpoints
     const action = opts.action || defaults.action
-    let endpointIndex
+    let epIndex
 
     if (!endpoints || !endpoints.length) {
       cb({message: 'No endpoints in config'})
@@ -207,19 +211,20 @@ function removeEndpoint(url, opts, cb) {
     url = utils.cleanUrl(url)
 
     if (opts.port) {
-      endpointIndex = utils.findIndexBy(endpoints, item => {
+      epIndex = utils.findIndexBy(endpoints, item => {
         return item.port == opts.port
       })
     } else {
-      endpointIndex = defaultEndpointIndex(endpoints)
+      epIndex = defaultEndpointIndex(endpoints)
     }
 
-    if (endpointIndex !== 0 && !endpointIndex) {
+    if (epIndex !== 0 && !epIndex) {
       cb({message: 'Endpoint not found in config'})
       return
     }
 
-    removeEndpointFromAction(endpoints, endpointIndex, action, url)
+    const urls = removeEndpointFromAction(endpoints, epIndex, action, url)
+    configData.endpoints[epIndex][action] = urls
 
     update(configData, cb)
   })

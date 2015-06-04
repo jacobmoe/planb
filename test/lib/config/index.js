@@ -285,19 +285,76 @@ describe('config/index', () => {
     context('project is initialized', () => {
       beforeEach(project.init)
 
-      it('returns error if url not found', done => {
-        done()
+      it('returns error if no endpoint found for given port', done => {
+        config.removeEndpoint(url, {port: 1234}, err => {
+          assert.isObject(err)
+          done()
+        })
       })
 
       it('removes url from default port and action if not supplied', done => {
-        done()
+        config.addEndpoint(url, null, err => {
+          assert.notOk(err)
+          config.addEndpoint(url + '/other', null, err => {
+            assert.notOk(err)
+
+            config.read((err, configData) => {
+              assert.notOk(err)
+              assert.equal(configData.endpoints[0].get.length, 2)
+
+              config.removeEndpoint(url, null, err => {
+                assert.notOk(err)
+
+                config.read((err, configData) => {
+                  assert.notOk(err)
+                  assert.equal(configData.endpoints[0].get.length, 1)
+                  assert.equal(configData.endpoints[0].get[0], utils.cleanUrl(url + '/other'))
+                  done()
+                })
+              })
+            })
+          })
+
+        })
       })
 
       it('removes url from given port and action', done => {
-        done()
+        const opts = {port: 1234, action: 'post'}
+
+        config.addEndpoint(url, opts, err => {
+          assert.notOk(err)
+
+          config.addEndpoint(url + '/other', opts, err => {
+            assert.notOk(err)
+
+            config.addEndpoint(url + '/yet-another', null, err => {
+              assert.notOk(err)
+
+              config.read((err, configData) => {
+                assert.notOk(err)
+                assert.equal(configData.endpoints[0].port, 5000)
+                assert.equal(configData.endpoints[0].get.length, 1)
+                assert.equal(configData.endpoints[1].port, 1234)
+                assert.equal(configData.endpoints[1].post.length, 2)
+
+                config.removeEndpoint(url, opts, err => {
+                  assert.notOk(err)
+
+                  config.read((err, configData) => {
+                    assert.notOk(err)
+
+                    assert.equal(configData.endpoints[0].get.length, 1)
+                    assert.equal(configData.endpoints[1].post.length, 1)
+
+                    done()
+                  })
+                })
+              })
+            })
+          })
+        })
       })
     })
   })
-
 
 })
