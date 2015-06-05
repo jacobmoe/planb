@@ -1,29 +1,33 @@
-import fs from 'fs'
+import fs from 'fs-extra'
 import path from 'path'
 
 // variables in ES6 imports. how?
 const srcPath = '../../' + SRC_DIR
 const project = require(srcPath + '/lib/project')
-const config = require(srcPath + '/lib/config')
-const storage = require(srcPath + '/lib/storage')
+const configFactory = require(srcPath + '/lib/config')
+const storageFactory = require(srcPath + '/lib/storage')
+
+const dataDirName = storageFactory.dataDirName
 
 describe('controller: project', () => {
   before(cleanup)
   afterEach(cleanup)
 
   describe('init', () => {
+    const config = configFactory(process.cwd())
+
     context('project not initialized', () => {
       it('creates data dir and config in current directory', done => {
         fs.readdir(process.cwd(), (err, files) => {
           assert.notOk(err)
-          assert.equal(files.indexOf(storage.projects.dataDirName), -1)
+          assert.equal(files.indexOf(dataDirName), -1)
           assert.equal(files.indexOf(config.configName), -1)
 
           project.init(initErr => {
             fs.readdir(process.cwd(), (err, files) => {
               assert.notOk(initErr)
               assert.notOk(err)
-              assert.notEqual(files.indexOf(storage.projects.dataDirName), -1)
+              assert.notEqual(files.indexOf(dataDirName), -1)
               assert.notEqual(files.indexOf(config.configName), -1)
 
               done()
@@ -66,6 +70,73 @@ describe('controller: project', () => {
     })
   })
 
+  describe('getRoot', () => {
+    context('project not initialized', () => {
+      it('returns a null path', done => {
+        project.getRoot((err, path) => {
+          assert.equal(err.message, 'Project not initialized')
+          assert.notOk(path)
+          done()
+        })
+      })
+    })
+
+    context('project initialized', () => {
+      beforeEach(project.init)
+
+      it('returns the path to the project root', done => {
+        project.getRoot((err, path) => {
+          assert.isNull(err)
+          assert.equal(path, process.cwd())
+          done()
+        })
+      })
+    })
+
+    context('project not in current directory', () => {
+      const originalDir = process.cwd()
+      const tempDirName = '.planb-temp.d.test'
+
+      function revert(done) {
+        process.chdir(originalDir)
+
+        fs.remove(tempDirName, done)
+      }
+
+      beforeEach(project.init)
+
+      beforeEach(done => {
+        fs.mkdir(tempDirName, (err) => {
+          if (err) {revert(done); return}
+
+          process.chdir(tempDirName)
+
+          fs.mkdir(tempDirName, (err) => {
+            if (err) {revert(done); return}
+
+            process.chdir(tempDirName)
+            done()
+          })
+        })
+      })
+
+      afterEach(revert)
+
+      it('looks up until finding the data directory', done => {
+        assert.equal(
+          process.cwd(),
+          originalDir + '/' + tempDirName + '/' + tempDirName
+        )
+
+        project.getRoot((err, projectPath) => {
+          assert.isNull(err)
+          assert.equal(projectPath, originalDir)
+          done()
+        })
+      })
+    })
+  })
+
   describe('addEndpoint', () => {
     beforeEach(project.init)
 
@@ -75,12 +146,12 @@ describe('controller: project', () => {
       project.addEndpoint(testUrl, err => {
         assert.notOk(err)
 
-        storage.projects.getRoot((err, rootPath) => {
+        project.getRoot((err, rootPath) => {
           assert.isNull(err)
 
           const filePath = path.join(
             rootPath,
-            storage.projects.dataDirName,
+            dataDirName,
             'www.someurl.com:api:v1:stuff'
           )
 
@@ -91,5 +162,6 @@ describe('controller: project', () => {
     })
 
   })
+
 
 })

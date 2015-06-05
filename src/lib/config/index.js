@@ -2,7 +2,6 @@ import path from 'path'
 
 import packageJson from '../../../package.json'
 import utils from '../utils'
-import projects from '../storage/projects'
 
 import * as defaults from './defaults'
 
@@ -60,18 +59,14 @@ export default function (projectPath) {
   }
 
   function update(data, cb) {
-    projects.getRoot((err, rootPath) => {
-      if (err) { cb(err); return }
+    const configPath = path.join(projectPath, configName)
 
-      const configPath = path.join(rootPath, configName)
-
-      utils.writeJsonFile(configPath, data, err => {
-        if (err) {
-          cb({message: 'Error updating project config', data: err})
-        } else {
-          cb()
-        }
-      })
+    utils.writeJsonFile(configPath, data, err => {
+      if (err) {
+        cb({message: 'Error updating project config', data: err})
+      } else {
+        cb()
+      }
     })
   }
 

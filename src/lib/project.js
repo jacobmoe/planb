@@ -1,15 +1,17 @@
 import path from 'path'
 
-import storage from './storage'
+import storageFactory, { dataDirName } from './storage'
 import configFactory from './config'
+import utils from './utils'
 
-const projects = storage.projects
-const endpoints = storage.endpoints
 
 function init(cb) {
+  const storage = storageFactory(process.cwd())
+  const projects = storage.projects
+
   const config = configFactory(process.cwd())
 
-  projects.checkForDataDir(process.cwd(), (err, dataDirExists) => {
+  projects.checkForDataDir((err, dataDirExists) => {
     if (err) {
       cb({message: 'Error initializing project', data: err})
       return
@@ -38,15 +40,44 @@ function init(cb) {
   })
 }
 
+function getRoot(cb, dots) {
+  dots = dots || '.'
+
+  const currentPath = path.join(process.cwd(), dots)
+  const projectPath = currentPath + '/' + dataDirName
+
+  utils.fileExists(projectPath, (err, exists) => {
+    if (err) {
+      cb({message: 'Error getting root', data: err})
+    } else if (exists) {
+      cb(null, currentPath)
+    } else {
+      if (currentPath === '/') {
+        cb({message: 'Project not initialized'})
+      } else {
+        if (dots === '.') {
+          dots = '..'
+        } else {
+          dots = dots + '/..'
+        }
+
+        getRoot(cb, dots)
+      }
+    }
+  })
+}
+
 function addEndpoint(url, cb) {
-  projects.getRoot((err, rootPath) => {
+  getRoot((err, rootPath) => {
+    const storage = storageFactory(rootPath)
+    const endpoints = storage.endpoints
+
     if (err || !rootPath) {
       cb(err || {message: 'Project root not found'})
     } else {
-      const dirPath = path.join(rootPath, projects.dataDirName)
 
       // TODO add endpoint to config
-      endpoints.create(dirPath, url, err => {
+      endpoints.create(url, err => {
         if (err) {cb(err); return}
 
         cb()
@@ -57,5 +88,6 @@ function addEndpoint(url, cb) {
 
 export default {
   init: init,
-  addEndpoint: addEndpoint
+  addEndpoint: addEndpoint,
+  getRoot: getRoot
 }

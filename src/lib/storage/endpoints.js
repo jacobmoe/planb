@@ -4,56 +4,66 @@ import async from 'async'
 
 import utils from '../utils.js'
 
-export function create(dataPath, url, cb) {
-  const name = utils.endpointNameFromPath(url)
+export default function (storagePath) {
 
-  utils.createDir(path.join(dataPath, name), createDirErr => {
-    if (createDirErr) { cb(createDirErr); return }
+  function create(url, cb) {
+    const name = utils.endpointNameFromPath(url)
 
-    cb()
-  })
-}
+    utils.createDir(path.join(storagePath, name), err => {
+      if (err) { cb(err); return }
 
-export function all(cb) {
-  fs.readdir(utils.dataPath, (err, files) => {
-    if (err) { cb(err); return }
+      cb()
+    })
+  }
 
-    cb(null, files.map(file => {
-      return utils.pathFromEndpointName(file)
-    }))
-  })
-}
+  function all(cb) {
+    fs.readdir(utils.dataPath, (err, files) => {
+      if (err) { cb(err); return }
 
-export function remove(endpoint, callback) {
-  const name = utils.endpointNameFromPath(endpoint)
+      cb(null, files.map(file => {
+        return utils.pathFromEndpointName(file)
+      }))
+    })
+  }
 
-  const endpointPath = utils.dataPath + name
+  function remove(endpoint, callback) {
+    const name = utils.endpointNameFromPath(endpoint)
 
-  fs.readdir(endpointPath, (err, files) => {
-    if (err) { callback(err); return }
+    const endpointPath = utils.dataPath + name
 
-    const jobs = files.reduce((collection, file) => {
-      collection.push(function(cb) {
+    fs.readdir(endpointPath, (err, files) => {
+      if (err) { callback(err); return }
 
-        const versionPath = endpointPath + '/' + file
-        fs.unlink(versionPath, unlinkErr => {
-          if (unlinkErr) { cb(unlinkErr); return }
+      const jobs = files.reduce((collection, file) => {
+        collection.push(function(cb) {
 
-          cb()
+          const versionPath = endpointPath + '/' + file
+          fs.unlink(versionPath, unlinkErr => {
+            if (unlinkErr) { cb(unlinkErr); return }
+
+            cb()
+          })
+        })
+
+        return collection
+      }, [])
+
+      async.parallel(jobs, unlinkAllErr => {
+        if (unlinkAllErr) { callback(unlinkAllErr); return }
+
+        fs.rmdir(endpointPath, rmErr => {
+          if (rmErr) { callback(rmErr); return }
+
+          callback()
         })
       })
-
-      return collection
-    }, [])
-
-    async.parallel(jobs, unlinkAllErr => {
-      if (unlinkAllErr) { callback(unlinkAllErr); return }
-
-      fs.rmdir(endpointPath, rmErr => {
-        if (rmErr) { callback(rmErr); return }
-
-        callback()
-      })
     })
-  })
+  }
+
+  return {
+    create: create,
+    all: all,
+    remove: remove
+  }
+
 }

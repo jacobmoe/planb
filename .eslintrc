@@ -8,7 +8,8 @@
     "curly": [2, "multi-line"],
     "eqeqeq": 0,
     "no-shadow": 0,
-    "no-unused-vars": [2, {"vars": "all", "args": "none"}]
+    "no-unused-vars": [2, {"vars": "all", "args": "none"}],
+    "no-underscore-dangle": 0
   },
   "env": {
     "node": true,
