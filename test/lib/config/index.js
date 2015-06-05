@@ -2,10 +2,12 @@ import fs from 'fs'
 
 // variables in ES6 imports. how?
 const srcPath = '../../../' + SRC_DIR
-const config = require(srcPath + '/lib/config')(process.cwd())
-const defaults = require(srcPath + '/lib/config/defaults')
+const configFactory = require(srcPath + '/lib/config')
+const defaults = require(srcPath + '/lib/defaults')
 const project = require(srcPath + '/lib/project')
 const utils = require(srcPath + '/lib/utils')
+
+const config = configFactory.default(process.cwd())
 
 describe('config/index', () => {
   before(cleanup)
@@ -73,7 +75,7 @@ describe('config/index', () => {
       it('returns the config file data', done => {
         config.read((err, data) => {
           assert.isNull(err)
-          assert.deepEqual(data, defaults.configData)
+          assert.deepEqual(data, configFactory.defaultConfigData)
           done()
         })
       })
@@ -82,7 +84,7 @@ describe('config/index', () => {
 
   describe('addEndpoint', () => {
     const url = 'http://test-endpoint.com/api/v1/stuff/43'
-    const opts = {port: 1234, action: 'put'}
+    const opts = {port: "1234", action: 'put'}
 
     context('project not initialized', () => {
       it('returns an error', done => {
@@ -103,7 +105,7 @@ describe('config/index', () => {
           config.read((err, configData) => {
             assert.notOk(err)
 
-            const item = utils.findBy(configData.endpoints, {port: opts.port})
+            const item = configData.endpoints[opts.port]
 
             assert.include(item[opts.action], utils.cleanUrl(url))
 
@@ -113,7 +115,7 @@ describe('config/index', () => {
       })
 
       it('adds url to existing item if port present', done => {
-        opts.port = 5000
+        opts.port = '5000'
         opts.action = 'get'
 
         config.addEndpoint(url, opts, err => {
@@ -122,10 +124,10 @@ describe('config/index', () => {
           config.read((err, configData) => {
             assert.notOk(err)
 
-            assert.equal(configData.endpoints.length, 1)
-            assert.equal(configData.endpoints[0].port, opts.port)
-            assert.equal(configData.endpoints[0][opts.action].length, 1)
-            assert.equal(configData.endpoints[0][opts.action][0], utils.cleanUrl(url))
+            assert.equal(Object.keys(configData.endpoints).length, 1)
+            assert.isObject(configData.endpoints[opts.port])
+            assert.equal(configData.endpoints[opts.port][opts.action].length, 1)
+            assert.equal(configData.endpoints[opts.port][opts.action][0], utils.cleanUrl(url))
 
             config.addEndpoint(url + '/more-stuff', opts, err => {
               assert.notOk(err)
@@ -133,12 +135,12 @@ describe('config/index', () => {
               config.read((err, configData) => {
                 assert.notOk(err)
 
-                assert.equal(configData.endpoints.length, 1)
-                assert.equal(configData.endpoints[0].port, opts.port)
-                assert.equal(configData.endpoints[0][opts.action].length, 2)
-                assert.include(configData.endpoints[0][opts.action], utils.cleanUrl(url))
+                assert.equal(Object.keys(configData.endpoints).length, 1)
+                assert.isObject(configData.endpoints[opts.port])
+                assert.equal(configData.endpoints[opts.port][opts.action].length, 2)
+                assert.include(configData.endpoints[opts.port][opts.action], utils.cleanUrl(url))
                 assert.include(
-                  configData.endpoints[0][opts.action],
+                  configData.endpoints[opts.port][opts.action],
                   utils.cleanUrl(url + '/more-stuff')
                 )
 
@@ -162,14 +164,17 @@ describe('config/index', () => {
             config.read((err, configData) => {
               assert.notOk(err)
 
-              assert.equal(configData.endpoints.length, 1)
-              assert.equal(configData.endpoints[0].port, 5000)
+              assert.equal(Object.keys(configData.endpoints).length, 1)
+              assert.isObject(configData.endpoints[opts.port])
 
-              assert.equal(configData.endpoints[0].get.length, 1)
-              assert.equal(configData.endpoints[0].put.length, 1)
+              assert.equal(configData.endpoints[opts.port].get.length, 1)
+              assert.equal(configData.endpoints[opts.port].put.length, 1)
 
-              assert.include(configData.endpoints[0].get[0], utils.cleanUrl(url))
-              assert.include(configData.endpoints[0].put[0], utils.cleanUrl(url + '/more'))
+              assert.include(configData.endpoints[opts.port].get[0], utils.cleanUrl(url))
+              assert.include(
+                configData.endpoints[opts.port].put[0],
+                utils.cleanUrl(url + '/more')
+              )
 
               done()
             })
@@ -189,13 +194,13 @@ describe('config/index', () => {
             config.read((err, configData) => {
               assert.notOk(err)
 
-              assert.equal(configData.endpoints.length, 1)
-              assert.equal(configData.endpoints[0].port, opts.port)
+              assert.equal(Object.keys(configData.endpoints).length, 1)
+              assert.isObject(configData.endpoints[opts.port])
 
-              assert.equal(configData.endpoints[0][opts.action].length, 1)
+              assert.equal(configData.endpoints[opts.port][opts.action].length, 1)
 
               assert.include(
-                configData.endpoints[0][opts.action][0],
+                configData.endpoints[opts.port][opts.action][0],
                 utils.cleanUrl(url)
               )
 
@@ -206,7 +211,7 @@ describe('config/index', () => {
       })
 
       it('creates a new config item if port not present', done => {
-        let opts = { port: 1234, action: "post" }
+        let opts = { port: "1234", action: "post" }
 
         config.addEndpoint(url, opts, err => {
           assert.notOk(err)
@@ -214,15 +219,15 @@ describe('config/index', () => {
           config.read((err, configData) => {
             assert.notOk(err)
 
-            assert.equal(configData.endpoints.length, 2)
+            assert.equal(Object.keys(configData.endpoints).length, 2)
 
-            assert.equal(configData.endpoints[0].port, 5000)
-            assert.equal(configData.endpoints[0].get.length, 0)
+            assert.isObject(configData.endpoints["5000"])
+            assert.equal(configData.endpoints["5000"].get.length, 0)
 
-            assert.equal(configData.endpoints[1].port, 1234)
-            assert.equal(configData.endpoints[1].post.length, 1)
+            assert.isObject(configData.endpoints["1234"])
+            assert.equal(configData.endpoints["1234"].post.length, 1)
             assert.include(
-              configData.endpoints[1][opts.action][0],
+              configData.endpoints["1234"][opts.action][0],
               utils.cleanUrl(url)
             )
 
@@ -240,11 +245,11 @@ describe('config/index', () => {
           config.read((err, configData) => {
             assert.notOk(err)
 
-            assert.equal(configData.endpoints.length, 1)
+            assert.equal(Object.keys(configData.endpoints).length, 1)
 
-            assert.equal(configData.endpoints[0].port, 5000)
-            assert.equal(configData.endpoints[0].get.length, 0)
-            assert.equal(configData.endpoints[0].post.length, 1)
+            assert.isObject(configData.endpoints["5000"])
+            assert.equal(configData.endpoints["5000"].get.length, 0)
+            assert.equal(configData.endpoints["5000"].post.length, 1)
 
             done()
           })
@@ -258,10 +263,10 @@ describe('config/index', () => {
           config.read((err, configData) => {
             assert.notOk(err)
 
-            assert.equal(configData.endpoints.length, 1)
+            assert.equal(Object.keys(configData.endpoints).length, 1)
 
-            assert.equal(configData.endpoints[0].port, 5000)
-            assert.equal(configData.endpoints[0].get.length, 1)
+            assert.isObject(configData.endpoints["5000"])
+            assert.equal(configData.endpoints["5000"].get.length, 1)
 
             done()
           })
@@ -286,7 +291,7 @@ describe('config/index', () => {
       beforeEach(project.init)
 
       it('returns error if no endpoint found for given port', done => {
-        config.removeEndpoint(url, {port: 1234}, err => {
+        config.removeEndpoint(url, {port: "1234"}, err => {
           assert.isObject(err)
           done()
         })
@@ -300,15 +305,18 @@ describe('config/index', () => {
 
             config.read((err, configData) => {
               assert.notOk(err)
-              assert.equal(configData.endpoints[0].get.length, 2)
+              assert.equal(configData.endpoints["5000"].get.length, 2)
 
               config.removeEndpoint(url, null, err => {
                 assert.notOk(err)
 
                 config.read((err, configData) => {
                   assert.notOk(err)
-                  assert.equal(configData.endpoints[0].get.length, 1)
-                  assert.equal(configData.endpoints[0].get[0], utils.cleanUrl(url + '/other'))
+                  assert.equal(configData.endpoints["5000"].get.length, 1)
+                  assert.equal(
+                    configData.endpoints["5000"].get[0],
+                    utils.cleanUrl(url + '/other')
+                  )
                   done()
                 })
               })
@@ -319,7 +327,7 @@ describe('config/index', () => {
       })
 
       it('removes url from given port and action', done => {
-        const opts = {port: 1234, action: 'post'}
+        const opts = {port: '1234', action: 'post'}
 
         config.addEndpoint(url, opts, err => {
           assert.notOk(err)
@@ -332,10 +340,10 @@ describe('config/index', () => {
 
               config.read((err, configData) => {
                 assert.notOk(err)
-                assert.equal(configData.endpoints[0].port, 5000)
-                assert.equal(configData.endpoints[0].get.length, 1)
-                assert.equal(configData.endpoints[1].port, 1234)
-                assert.equal(configData.endpoints[1].post.length, 2)
+                assert.isObject(configData.endpoints["5000"])
+                assert.equal(configData.endpoints["5000"].get.length, 1)
+                assert.isObject(configData.endpoints["1234"])
+                assert.equal(configData.endpoints["1234"].post.length, 2)
 
                 config.removeEndpoint(url, opts, err => {
                   assert.notOk(err)
@@ -343,8 +351,8 @@ describe('config/index', () => {
                   config.read((err, configData) => {
                     assert.notOk(err)
 
-                    assert.equal(configData.endpoints[0].get.length, 1)
-                    assert.equal(configData.endpoints[1].post.length, 1)
+                    assert.equal(configData.endpoints["5000"].get.length, 1)
+                    assert.equal(configData.endpoints["1234"].post.length, 1)
 
                     done()
                   })

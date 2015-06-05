@@ -1,16 +1,21 @@
 import path from 'path'
 
-import packageJson from '../../../package.json'
 import utils from '../utils'
+import * as defaults from '../defaults'
 
-import * as defaults from './defaults'
+const portMin = 1024
+const portMax = 65535
 
-const name = packageJson.name
-let configName = '.' + name + '.json'
-
-if (process.env.NODE_ENV === 'test') {
-  configName = configName + '.test'
+export const defaultConfigData = {
+  "endpoints": {
+    [defaults.port]: {
+      [defaults.action]: [],
+      "default": true
+    }
+  }
 }
+
+export const configName = utils.getProjectFileName('json')
 
 export default function (projectPath) {
 
@@ -47,7 +52,7 @@ export default function (projectPath) {
       } else if (err) {
         cb({message: "Error creating project config", data: err})
       } else {
-        utils.writeJsonFile(configPath, defaults.configData, err => {
+        utils.writeJsonFile(configPath, defaultConfigData, err => {
           if (err) {
             cb({message: 'Error creating project config', data: err})
           } else {
@@ -74,58 +79,68 @@ export default function (projectPath) {
     return defaults.allowedActions.indexOf(action) > -1
   }
 
-  function defaultEndpointIndex(endpoints) {
-    let index = utils.findIndexBy(endpoints, {default: true})
+  function validPort(port) {
+    const isNumber = !isNaN(port)
+    const validPortRange = port > portMin && port < portMax
 
-    return index || 0
+    return isNumber && validPortRange
+  }
+
+  function defaultEndpointPort(endpoints) {
+    let port = utils.findKeyBy(endpoints, {default: true})
+
+    if (!port && endpoints[defaults.port]) {
+      port = defaults.port
+    }
+
+    return port
   }
 
   function newEndpoint(opts) {
-    const port = opts.port || defaults.port
     const action = validAction(opts.action) ? opts.action : defaults.action
 
-    return { port: port, [action]: [] }
+    return { [action]: [] }
   }
 
-  function addEndpointToAction(endpoints, index, action, url) {
-    if (!endpoints[index][action]) {
-      endpoints[index][action] = []
+  function addEndpointToAction(endpoint, action, url) {
+    if (!endpoint[action]) {
+      endpoint[action] = []
     }
 
-    if (endpoints[index][action].indexOf(url) < 0) {
-      endpoints[index][action].push(url)
+    if (endpoint[action].indexOf(url) < 0) {
+      endpoint[action].push(url)
     }
 
-    return endpoints
+    return endpoint
   }
 
   function addEndpointForPort(endpoints, url, port, opts) {
     const action = validAction(opts.action) ? opts.action : defaults.action
 
-    let endpointIndex = utils.findIndexBy(endpoints, item => {
-      return item.port == port
-    })
-
-    if (endpointIndex !== 0 && !endpointIndex) {
-      endpoints.push(newEndpoint(opts))
-      endpointIndex = endpoints.length - 1
+    if (!endpoints[port]) {
+      endpoints[port] = newEndpoint(opts)
     }
 
-    return addEndpointToAction(endpoints, endpointIndex, action, url)
+    return addEndpointToAction(endpoints[port], action, url)
   }
 
   function addEndpointForDefault(endpoints, url, opts) {
     const action = validAction(opts.action) ? opts.action : defaults.action
-    let endpointIndex
+    let port
 
-    if (!endpoints.length) {
-      endpoints.push(newEndpoint(opts))
-      endpointIndex = 0
+    if (Object.keys(endpoints).length) {
+      port = defaultEndpointPort(endpoints)
+
+      if (!port) {
+        endpoints[defaults.port] = newEndpoint(opts)
+        port = defaults.port
+      }
     } else {
-      endpointIndex = defaultEndpointIndex(endpoints)
+      endpoints[defaults.port] = newEndpoint(opts)
+      port = defaults.port
     }
 
-    return addEndpointToAction(endpoints, endpointIndex, action, url)
+    return addEndpointToAction(endpoints[port], action, url)
   }
 
   /*
@@ -151,19 +166,17 @@ export default function (projectPath) {
       url = utils.cleanUrl(url)
 
       if (opts.port) {
-        endpoints = addEndpointForPort(endpoints, url, opts.port, opts)
+        addEndpointForPort(endpoints, url, opts.port, opts)
       } else {
-        endpoints = addEndpointForDefault(endpoints, url, opts)
+        addEndpointForDefault(endpoints, url, opts)
       }
-
-      configData.endpoints = endpoints
 
       update(configData, cb)
     })
   }
 
-  function removeEndpointFromAction(endpoints, index, action, url) {
-    let urls = endpoints[index][action]
+  function removeEndpointFromAction(endpoint, action, url) {
+    let urls = endpoint[action]
 
     if (!urls || !urls.length) return null
 
@@ -198,30 +211,26 @@ export default function (projectPath) {
 
       const endpoints = configData.endpoints
       const action = opts.action || defaults.action
-      let epIndex
+      let port = opts.port
 
-      if (!endpoints || !endpoints.length) {
+      if (!endpoints || !Object.keys(endpoints).length) {
         cb({message: 'No endpoints in config'})
         return
       }
 
       url = utils.cleanUrl(url)
 
-      if (opts.port) {
-        epIndex = utils.findIndexBy(endpoints, item => {
-          return item.port == opts.port
-        })
-      } else {
-        epIndex = defaultEndpointIndex(endpoints)
+      if (!port) {
+        port = defaultEndpointPort(endpoints)
       }
 
-      if (epIndex !== 0 && !epIndex) {
+      if (!port || !endpoints[port]) {
         cb({message: 'Endpoint not found in config'})
         return
       }
 
-      const urls = removeEndpointFromAction(endpoints, epIndex, action, url)
-      configData.endpoints[epIndex][action] = urls
+      const urls = removeEndpointFromAction(endpoints[port], action, url)
+      configData.endpoints[port][action] = urls
 
       update(configData, cb)
     })

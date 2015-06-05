@@ -14,7 +14,7 @@ describe('controller: project', () => {
   afterEach(cleanup)
 
   describe('init', () => {
-    const config = configFactory(process.cwd())
+    const config = configFactory.default(process.cwd())
 
     context('project not initialized', () => {
       it('creates data dir and config in current directory', done => {

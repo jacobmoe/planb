@@ -1,5 +1,7 @@
 import fs from 'fs'
 
+import packageJson from '../../package'
+
 function createDir(path, cb) {
   fs.mkdir(path, err => {
     if (!err) { cb(null); return }
@@ -106,6 +108,65 @@ function findBy(arr, opts) {
   }
 }
 
+/*
+ * findKeyBy(obj, opts)
+ *
+ * Accepts an object and returns the key whose value is an object
+ * matching the opts object
+ *
+ * Usage:
+ *
+ * const obj = { "5000": {get: [], default: true}, "5001": {get: []} }
+ * findKeyBy(obj, {default: true}) // returns "5000"
+ */
+function findKeyBy(obj, opts) {
+  obj = obj || {}
+  opts = opts || {}
+  let key = null
+
+  const objKeys = Object.keys(obj)
+
+  for (let i = 0; i < objKeys.length; i++) {
+    const objKey = objKeys[i]
+    let keyMatch = true
+
+    if (obj[objKey] && typeof obj[objKey] === 'object') {
+      const optKeys = Object.keys(opts)
+      if (!optKeys.length) { keyMatch = false; break }
+
+      for (let j = 0; j < optKeys.length; j++) {
+        const optKey = optKeys[j]
+
+        if (obj[objKey][optKey] !== opts[optKey]) {
+          keyMatch = false
+          break
+        }
+      }
+    } else {
+      keyMatch = false
+    }
+
+    if (keyMatch) {
+      key = objKey
+      break
+    }
+  }
+
+  return key
+}
+
+function getProjectFileName(ext) {
+  const name = packageJson.name
+
+  let fileName = '.' + name + '.' + ext
+
+  if (process.env.NODE_ENV === 'test') {
+    fileName = fileName + '.test'
+  }
+
+  return fileName
+}
+
 export default {
   createDir: createDir,
   endpointNameFromPath: endpointNameFromPath,
@@ -116,5 +177,7 @@ export default {
   writeJsonFile: writeJsonFile,
   readJsonFile: readJsonFile,
   findIndexBy: findIndexBy,
-  findBy: findBy
+  findKeyBy: findKeyBy,
+  findBy: findBy,
+  getProjectFileName: getProjectFileName
 }

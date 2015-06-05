@@ -2,15 +2,17 @@ import fs from 'fs'
 
 // variables in ES6 imports. how?
 const srcPath = '../../../' + SRC_DIR
-const projects = require(srcPath + '/lib/storage/projects')(process.cwd())
+const storageFactory = require(srcPath + '/lib/storage')
 
-describe('storage/projects', () => {
+const storage = storageFactory.default(process.cwd())
+
+describe('storage/index', () => {
   before(cleanup)
   afterEach(cleanup)
 
   describe('dataDirName', () => {
     it('returns the test data directory name', done => {
-      assert.equal(projects.dataDirName, '.planb.d.test')
+      assert.equal(storageFactory.dataDirName, '.planb.d.test')
       done()
     })
   })
@@ -19,14 +21,14 @@ describe('storage/projects', () => {
     it('creates a data directory in current directory', done => {
       fs.readdir(process.cwd(), (err, files) => {
         assert.notOk(err)
-        assert.equal(files.indexOf(projects.dataDirName), -1)
+        assert.equal(files.indexOf(storageFactory.dataDirName), -1)
 
-        projects.createDataDir(err => {
+        storage.createDataDir(err => {
           assert.notOk(err)
 
           fs.readdir(process.cwd(), (err, files) => {
             assert.notOk(err)
-            assert.isAbove(files.indexOf(projects.dataDirName), -1)
+            assert.isAbove(files.indexOf(storageFactory.dataDirName), -1)
             done()
           })
         })
@@ -36,14 +38,14 @@ describe('storage/projects', () => {
 
   describe('checkForDataDir', () => {
     it('checks if current directory has a data dir', done => {
-      projects.checkForDataDir((err, exists) => {
+      storage.checkForDataDir((err, exists) => {
         assert.isNull(err)
         assert.isFalse(exists)
 
-        projects.createDataDir(err => {
+        storage.createDataDir(err => {
           assert.notOk(err)
 
-          projects.checkForDataDir((err, exists) => {
+          storage.checkForDataDir((err, exists) => {
             assert.isNull(err)
             assert.isTrue(exists)
             done()

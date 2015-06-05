@@ -4,14 +4,12 @@ import storageFactory, { dataDirName } from './storage'
 import configFactory from './config'
 import utils from './utils'
 
-
 function init(cb) {
   const storage = storageFactory(process.cwd())
-  const projects = storage.projects
 
   const config = configFactory(process.cwd())
 
-  projects.checkForDataDir((err, dataDirExists) => {
+  storage.checkForDataDir((err, dataDirExists) => {
     if (err) {
       cb({message: 'Error initializing project', data: err})
       return
@@ -26,7 +24,7 @@ function init(cb) {
       if (dataDirExists && configExists) {
         cb({message: 'Project already initialized'})
       } else {
-        projects.createDataDir(function(err) {
+        storage.createDataDir(function(err) {
           if (err) {cb(err); return}
 
           config.create(function(err) {

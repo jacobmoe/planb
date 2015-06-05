@@ -3,24 +3,28 @@ import path from 'path'
 
 // variables in ES6 imports. how?
 const srcPath = '../../../' + SRC_DIR
-const controller = require(srcPath + '/lib/project')
-const projects = require(srcPath + '/lib/storage/projects')
-const endpoints = require(srcPath + '/lib/storage/endpoints')
+const project = require(srcPath + '/lib/project')
+const storageFactory = require(srcPath + '/lib/storage')
+const endpointsFactory = require(srcPath + '/lib/storage/endpoints')
+
+const storagePath = path.join(process.cwd(), storageFactory.dataDirName)
+const endpoints = endpointsFactory(storagePath)
 
 describe('storage/endpoints', () => {
   before(cleanup)
   afterEach(cleanup)
 
   describe('create', () => {
-    beforeEach(controller.init)
+    beforeEach(project.init)
 
     it('accepts a path, a url and creats an endpoint directory', done => {
-      projects.getRoot((err, rootPath) => {
+      project.getRoot((err, rootPath) => {
         assert.isNull(err)
 
-        const dataPath = path.join(rootPath, projects.dataDirName)
+        const dataPath = path.join(rootPath, storageFactory.dataDirName)
         const testUrl = 'http://www.someurl.com/api/v1/stuff'
-        endpoints.create(dataPath, testUrl, err => {
+
+        endpoints.create(testUrl, {}, err => {
           assert.notOk(err)
 
           fs.readdir(dataPath, (err, files) => {

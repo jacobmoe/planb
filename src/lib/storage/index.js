@@ -1,31 +1,40 @@
+import fs from 'fs'
 import path from 'path'
 
-import projects from './projects'
 import endpoints from './endpoints'
 import versions from './versions'
+import utils from '../utils'
 
-import packageJson from '../../../package'
-
-function getDataDirName(name) {
-  let _dataDirName = '.' + name + '.d'
-
-  if (process.env.NODE_ENV === 'test') {
-    _dataDirName = _dataDirName + '.test'
-  }
-
-  return _dataDirName
-}
-
-export const dataDirName = getDataDirName(packageJson.name)
+export const dataDirName = utils.getProjectFileName('d')
 
 export default function (projectPath) {
-
   const storagePath = path.join(projectPath, dataDirName)
 
+  /*
+  * Create project data directory
+  *
+  * Nothing is returned is directory created successfully,
+  * or if directory already exists
+  */
+  function createDataDir(cb) {
+    fs.mkdir(storagePath, err => {
+      if (err && err.code !== 'EXIST') {
+        cb({message: 'Error creating data directory', data: err})
+      } else {
+        cb()
+      }
+    })
+  }
+
+  function checkForDataDir(cb) {
+    utils.fileExists(storagePath, cb)
+  }
+
   return {
-    projects: projects(storagePath),
     endpoints: endpoints(storagePath),
-    versions: versions
+    versions: versions,
+    createDataDir: createDataDir,
+    checkForDataDir: checkForDataDir
   }
 
 }
