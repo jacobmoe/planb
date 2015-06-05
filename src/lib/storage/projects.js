@@ -39,8 +39,8 @@ function getRoot(cb, dots) {
   })
 }
 
-function checkPwdDataDir(cb) {
-  const dataDirPath = path.join(process.cwd(), dataDirName)
+function checkForDataDir(projectPath, cb) {
+  const dataDirPath = path.join(projectPath, dataDirName)
 
   utils.fileExists(dataDirPath, cb)
 }
@@ -66,6 +66,6 @@ function createDataDir(cb) {
 export default {
   dataDirName: dataDirName,
   getRoot: getRoot,
-  checkPwdDataDir: checkPwdDataDir,
+  checkForDataDir: checkForDataDir,
   createDataDir: createDataDir
 }

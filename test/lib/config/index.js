@@ -2,7 +2,7 @@ import fs from 'fs'
 
 // variables in ES6 imports. how?
 const srcPath = '../../../' + SRC_DIR
-const config = require(srcPath + '/lib/config')
+const config = require(srcPath + '/lib/config')(process.cwd())
 const defaults = require(srcPath + '/lib/config/defaults')
 const project = require(srcPath + '/lib/project')
 const utils = require(srcPath + '/lib/utils')
@@ -37,16 +37,16 @@ describe('config/index', () => {
     })
   })
 
-  describe('checkPwd', () => {
-    it('checks if current directory has a config file', done => {
-      config.checkPwd((err, exists) => {
+  describe('checkForConfigFile', () => {
+    it('checks if given directory has a config file', done => {
+      config.checkForConfigFile((err, exists) => {
         assert.isNull(err)
         assert.isFalse(exists)
 
         config.create(err => {
           assert.notOk(err)
 
-          config.checkPwd((err, exists) => {
+          config.checkForConfigFile((err, exists) => {
             assert.isNull(err)
             assert.isTrue(exists)
             done()

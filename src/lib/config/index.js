@@ -13,228 +13,232 @@ if (process.env.NODE_ENV === 'test') {
   configName = configName + '.test'
 }
 
-/* get config file object */
-function read(cb) {
-  projects.getRoot((err, rootPath) => {
-    if (err) { cb(err); return }
-    if (!rootPath) { cb({message: 'No project root found'}); return }
+export default function (projectPath) {
 
-    const configPath = path.join(rootPath, configName)
-    utils.readJsonFile(configPath, cb)
-  })
-}
+  /* get config file object */
+  function read(cb) {
+    const configPath = path.join(projectPath, configName)
+    utils.readJsonFile(configPath, (err, data) => {
+      if (err && err.code === 'ENOENT') {
+        cb({message: 'Config file not found'})
+      } else if (err) {
+        cb(err)
+      } else {
+        cb(null, data)
+      }
+    })
+  }
 
-/* check if config file exists in current directory */
-function checkPwd(cb) {
-  const configPath = path.join(process.cwd(), configName)
+  function checkForConfigFile(cb) {
+    utils.fileExists(path.join(projectPath, configName), cb)
+  }
 
-  utils.fileExists(configPath, cb)
-}
+  /*
+  * Create project config file
+  *
+  * Nothing is returned if file created successfully,
+  * or if file already exists. Otherwise, an error is returned.
+  */
+  function create(cb) {
+    const configPath = path.join(projectPath, configName)
 
-/*
- * Create project config file
- *
- * Nothing is returned if file created successfully,
- * or if file already exists. Otherwise, an error is returned.
- */
-function create(cb) {
-  const configPath = path.join(process.cwd(), configName)
+    checkForConfigFile((err, exists) => {
+      if (exists) {
+        cb()
+      } else if (err) {
+        cb({message: "Error creating project config", data: err})
+      } else {
+        utils.writeJsonFile(configPath, defaults.configData, err => {
+          if (err) {
+            cb({message: 'Error creating project config', data: err})
+          } else {
+            cb()
+          }
+        })
+      }
+    })
+  }
 
-  checkPwd((err, exists) => {
-    if (exists) {
-      cb()
-    } else if (err) {
-      cb({message: "Error creating project config", data: err})
-    } else {
-      utils.writeJsonFile(configPath, defaults.configData, err => {
+  function update(data, cb) {
+    projects.getRoot((err, rootPath) => {
+      if (err) { cb(err); return }
+
+      const configPath = path.join(rootPath, configName)
+
+      utils.writeJsonFile(configPath, data, err => {
         if (err) {
-          cb({message: 'Error creating project config', data: err})
+          cb({message: 'Error updating project config', data: err})
         } else {
           cb()
         }
       })
-    }
-  })
-}
-
-function update(data, cb) {
-  projects.getRoot((err, rootPath) => {
-    if (err) { cb(err); return }
-
-    const configPath = path.join(rootPath, configName)
-
-    utils.writeJsonFile(configPath, data, err => {
-      if (err) {
-        cb({message: 'Error updating project config', data: err})
-      } else {
-        cb()
-      }
     })
-  })
-}
-
-function validAction(action) {
-  return defaults.allowedActions.indexOf(action) > -1
-}
-
-function defaultEndpointIndex(endpoints) {
-  let index = utils.findIndexBy(endpoints, {default: true})
-
-  return index || 0
-}
-
-function newEndpoint(opts) {
-  const port = opts.port || defaults.port
-  const action = validAction(opts.action) ? opts.action : defaults.action
-
-  return { port: port, [action]: [] }
-}
-
-function addEndpointToAction(endpoints, index, action, url) {
-  if (!endpoints[index][action]) {
-    endpoints[index][action] = []
   }
 
-  if (endpoints[index][action].indexOf(url) < 0) {
-    endpoints[index][action].push(url)
+  function validAction(action) {
+    return defaults.allowedActions.indexOf(action) > -1
   }
 
-  return endpoints
-}
+  function defaultEndpointIndex(endpoints) {
+    let index = utils.findIndexBy(endpoints, {default: true})
 
-function addEndpointForPort(endpoints, url, port, opts) {
-  const action = validAction(opts.action) ? opts.action : defaults.action
-
-  let endpointIndex = utils.findIndexBy(endpoints, item => {
-    return item.port == port
-  })
-
-  if (endpointIndex !== 0 && !endpointIndex) {
-    endpoints.push(newEndpoint(opts))
-    endpointIndex = endpoints.length - 1
+    return index || 0
   }
 
-  return addEndpointToAction(endpoints, endpointIndex, action, url)
-}
+  function newEndpoint(opts) {
+    const port = opts.port || defaults.port
+    const action = validAction(opts.action) ? opts.action : defaults.action
 
-function addEndpointForDefault(endpoints, url, opts) {
-  const action = validAction(opts.action) ? opts.action : defaults.action
-  let endpointIndex
-
-  if (!endpoints.length) {
-    endpoints.push(newEndpoint(opts))
-    endpointIndex = 0
-  } else {
-    endpointIndex = defaultEndpointIndex(endpoints)
+    return { port: port, [action]: [] }
   }
 
-  return addEndpointToAction(endpoints, endpointIndex, action, url)
-}
+  function addEndpointToAction(endpoints, index, action, url) {
+    if (!endpoints[index][action]) {
+      endpoints[index][action] = []
+    }
 
-/*
- * addEndpoint
- *
- * Accepts a url and options. Adds the url to the config file
- *
- * Options: action, port
- *
- * First try to add the url to the config item that matches the
- * supplied port number. If not found, a new config item is created.
- * Once we have the config item, first try to add the url to the
- * given action. If it doesn't exist, create a new one.
- * The udpated data is then written back to the file
- */
-function addEndpoint(url, opts, cb) {
-  opts = opts || {}
+    if (endpoints[index][action].indexOf(url) < 0) {
+      endpoints[index][action].push(url)
+    }
 
-  read((err, configData) => {
-    if (err) { cb(err); return }
+    return endpoints
+  }
 
-    let endpoints = configData.endpoints || []
-    url = utils.cleanUrl(url)
+  function addEndpointForPort(endpoints, url, port, opts) {
+    const action = validAction(opts.action) ? opts.action : defaults.action
 
-    if (opts.port) {
-      endpoints = addEndpointForPort(endpoints, url, opts.port, opts)
+    let endpointIndex = utils.findIndexBy(endpoints, item => {
+      return item.port == port
+    })
+
+    if (endpointIndex !== 0 && !endpointIndex) {
+      endpoints.push(newEndpoint(opts))
+      endpointIndex = endpoints.length - 1
+    }
+
+    return addEndpointToAction(endpoints, endpointIndex, action, url)
+  }
+
+  function addEndpointForDefault(endpoints, url, opts) {
+    const action = validAction(opts.action) ? opts.action : defaults.action
+    let endpointIndex
+
+    if (!endpoints.length) {
+      endpoints.push(newEndpoint(opts))
+      endpointIndex = 0
     } else {
-      endpoints = addEndpointForDefault(endpoints, url, opts)
+      endpointIndex = defaultEndpointIndex(endpoints)
     }
 
-    configData.endpoints = endpoints
+    return addEndpointToAction(endpoints, endpointIndex, action, url)
+  }
 
-    update(configData, cb)
-  })
-}
+  /*
+  * addEndpoint
+  *
+  * Accepts a url and options. Adds the url to the config file
+  *
+  * Options: action, port
+  *
+  * First try to add the url to the config item that matches the
+  * supplied port number. If not found, a new config item is created.
+  * Once we have the config item, first try to add the url to the
+  * given action. If it doesn't exist, create a new one.
+  * The udpated data is then written back to the file
+  */
+  function addEndpoint(url, opts, cb) {
+    opts = opts || {}
 
-function removeEndpointFromAction(endpoints, index, action, url) {
-  let urls = endpoints[index][action]
+    read((err, configData) => {
+      if (err) { cb(err); return }
 
-  if (!urls || !urls.length) return null
+      let endpoints = configData.endpoints || []
+      url = utils.cleanUrl(url)
 
-  urls = urls.map(item => {
-    return utils.cleanUrl(item)
-  })
+      if (opts.port) {
+        endpoints = addEndpointForPort(endpoints, url, opts.port, opts)
+      } else {
+        endpoints = addEndpointForDefault(endpoints, url, opts)
+      }
 
-  const urlIndex = urls.indexOf(utils.cleanUrl(url))
+      configData.endpoints = endpoints
 
-  if (urlIndex < 0) return null
+      update(configData, cb)
+    })
+  }
 
-  urls.splice(urlIndex, 1)
+  function removeEndpointFromAction(endpoints, index, action, url) {
+    let urls = endpoints[index][action]
 
-  return urls
-}
+    if (!urls || !urls.length) return null
 
-/*
- * removeEndpoint
- *
- * Accepts a url and options. Removes the url from the config file.
- *
- * Options: action, port
- *
- * Remove url from the default config item and action if options
- * not supplied. Otherwise, by port and/or action and remove.
- */
-function removeEndpoint(url, opts, cb) {
-  opts = opts || {}
+    urls = urls.map(item => {
+      return utils.cleanUrl(item)
+    })
 
-  read((err, configData) => {
-    if (err) { cb(err); return }
+    const urlIndex = urls.indexOf(utils.cleanUrl(url))
 
-    const endpoints = configData.endpoints
-    const action = opts.action || defaults.action
-    let epIndex
+    if (urlIndex < 0) return null
 
-    if (!endpoints || !endpoints.length) {
-      cb({message: 'No endpoints in config'})
-      return
-    }
+    urls.splice(urlIndex, 1)
 
-    url = utils.cleanUrl(url)
+    return urls
+  }
 
-    if (opts.port) {
-      epIndex = utils.findIndexBy(endpoints, item => {
-        return item.port == opts.port
-      })
-    } else {
-      epIndex = defaultEndpointIndex(endpoints)
-    }
+  /*
+  * removeEndpoint
+  *
+  * Accepts a url and options. Removes the url from the config file.
+  *
+  * Options: action, port
+  *
+  * Remove url from the default config item and action if options
+  * not supplied. Otherwise, by port and/or action and remove.
+  */
+  function removeEndpoint(url, opts, cb) {
+    opts = opts || {}
 
-    if (epIndex !== 0 && !epIndex) {
-      cb({message: 'Endpoint not found in config'})
-      return
-    }
+    read((err, configData) => {
+      if (err) { cb(err); return }
 
-    const urls = removeEndpointFromAction(endpoints, epIndex, action, url)
-    configData.endpoints[epIndex][action] = urls
+      const endpoints = configData.endpoints
+      const action = opts.action || defaults.action
+      let epIndex
 
-    update(configData, cb)
-  })
-}
+      if (!endpoints || !endpoints.length) {
+        cb({message: 'No endpoints in config'})
+        return
+      }
 
-export default {
-  create: create,
-  read: read,
-  checkPwd: checkPwd,
-  configName: configName,
-  addEndpoint: addEndpoint,
-  removeEndpoint: removeEndpoint
+      url = utils.cleanUrl(url)
+
+      if (opts.port) {
+        epIndex = utils.findIndexBy(endpoints, item => {
+          return item.port == opts.port
+        })
+      } else {
+        epIndex = defaultEndpointIndex(endpoints)
+      }
+
+      if (epIndex !== 0 && !epIndex) {
+        cb({message: 'Endpoint not found in config'})
+        return
+      }
+
+      const urls = removeEndpointFromAction(endpoints, epIndex, action, url)
+      configData.endpoints[epIndex][action] = urls
+
+      update(configData, cb)
+    })
+  }
+
+  return {
+    create: create,
+    read: read,
+    checkForConfigFile: checkForConfigFile,
+    configName: configName,
+    addEndpoint: addEndpoint,
+    removeEndpoint: removeEndpoint
+  }
+
 }

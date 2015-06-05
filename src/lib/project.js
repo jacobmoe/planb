@@ -1,19 +1,21 @@
 import path from 'path'
 
 import storage from './storage'
-import config from './config'
+import configFactory from './config'
 
 const projects = storage.projects
 const endpoints = storage.endpoints
 
 function init(cb) {
-  projects.checkPwdDataDir((err, dataDirExists) => {
+  const config = configFactory(process.cwd())
+
+  projects.checkForDataDir(process.cwd(), (err, dataDirExists) => {
     if (err) {
       cb({message: 'Error initializing project', data: err})
       return
     }
 
-    config.checkPwd((err, configExists) => {
+    config.checkForConfigFile((err, configExists) => {
       if (err) {
         cb({message: 'Error initializing project', data: err})
         return
