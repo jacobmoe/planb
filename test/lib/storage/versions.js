@@ -107,31 +107,221 @@ describe('storage/versions', () => {
     })
   })
 
-  // describe('remove', () => {
-  //   beforeEach(project.init)
+  describe('current', () => {
+    const inputData = "some test data"
+    let versions
+    let endpointPath
 
-  //   it('accepts a path, a url, options and creates an endpoint directory', done => {
-  //     const testUrl = 'http://www.someurl.com/api/v1/stuff'
-  //     const opts = {port: '1234', action: 'get'}
+    beforeEach(project.init)
 
-  //     endpoints.create(testUrl, opts, err => {
-  //       assert.notOk(err)
+    beforeEach(done => {
+      const testUrl = 'http://www.someurl.com/api/v1/stuff'
+      const epName = utils.endpointNameFromPath(testUrl)
+      const opts = {port: '1234', action: 'get'}
 
-  //       fs.readdir(path.join(storagePath, opts.port, opts.action), (err, files) => {
-  //         assert.notOk(err)
-  //         assert.equal(files[0], 'www.someurl.com:api:v1:stuff')
+      endpointPath = path.join(storage.storagePath, opts.port, opts.action, epName)
+      storage.endpoints.create(testUrl, opts, err => {
+        assert.notOk(err)
 
-  //         endpoints.remove(testUrl, opts, err => {
-  //           assert.notOk(err)
+        versions = storage.versions(testUrl, opts)
+        done()
+      })
 
-  //           fs.readdir(path.join(storagePath, opts.port, opts.action), (err, files) => {
-  //             assert.notOk(err)
-  //             assert.equal(files.length, 0)
-  //             done()
-  //           })
-  //         })
-  //       })
-  //     })
-  //   })
-  // })
+    })
+
+    context('nothing in directory', () => {
+      it('returns nothing', done => {
+        versions.current((err, fileName) => {
+          assert.notOk(err)
+          assert.notOk(fileName)
+
+          done()
+        })
+      })
+    })
+
+    context('directory has contents', () => {
+      beforeEach(done => {
+        fs.writeFile(path.join(endpointPath, '0'), inputData, err => {
+          assert.notOk(err)
+
+          fs.writeFile(path.join(endpointPath, '1'), inputData, err => {
+            assert.notOk(err)
+
+            fs.writeFile(path.join(endpointPath, '2'), inputData, err => {
+              assert.notOk(err)
+              done()
+            })
+          })
+        })
+      })
+
+      it('returns the largest version', done => {
+        versions.current((err, fileName) => {
+          assert.notOk(err)
+
+          assert.equal(fileName, '2')
+          done()
+        })
+      })
+    })
+
+    context('directory has contents with file extensions', () => {
+      beforeEach(done => {
+        fs.writeFile(path.join(endpointPath, '0.json'), inputData, err => {
+          assert.notOk(err)
+
+          fs.writeFile(path.join(endpointPath, '1.json'), inputData, err => {
+            assert.notOk(err)
+
+            fs.writeFile(path.join(endpointPath, '2.json'), inputData, err => {
+              assert.notOk(err)
+              done()
+            })
+          })
+        })
+      })
+
+      it('returns the largest version', done => {
+        versions.current((err, fileName) => {
+          assert.notOk(err)
+
+          assert.equal(fileName, '2.json')
+          done()
+        })
+      })
+    })
+  })
+
+  describe('all', () => {
+    const inputData = "some test data"
+    let versions
+    let endpointPath
+
+    beforeEach(project.init)
+
+    beforeEach(done => {
+      const testUrl = 'http://www.someurl.com/api/v1/stuff'
+      const epName = utils.endpointNameFromPath(testUrl)
+      const opts = {port: '1234', action: 'get'}
+
+      endpointPath = path.join(storage.storagePath, opts.port, opts.action, epName)
+      storage.endpoints.create(testUrl, opts, err => {
+        assert.notOk(err)
+
+        versions = storage.versions(testUrl, opts)
+        done()
+      })
+
+    })
+
+    context('nothing in directory', () => {
+      it('returns empty array', done => {
+        versions.all((err, data) => {
+          assert.notOk(err)
+          assert.isArray(data)
+          assert.equal(data.length, 0)
+
+          done()
+        })
+      })
+    })
+
+    context('directory has contents', () => {
+      beforeEach(done => {
+        fs.writeFile(path.join(endpointPath, '0.json'), inputData, err => {
+          assert.notOk(err)
+
+          fs.writeFile(path.join(endpointPath, '1.json'), inputData, err => {
+            assert.notOk(err)
+
+            fs.writeFile(path.join(endpointPath, '2.json'), inputData, err => {
+              assert.notOk(err)
+              done()
+            })
+          })
+        })
+      })
+
+      it('returns data for file contents', done => {
+        versions.all((err, data) => {
+          assert.notOk(err)
+          assert.isArray(data)
+          assert.equal(data.length, 3)
+          assert.equal(data[0].name, '0.json')
+          assert.equal(data[1].name, '1.json')
+          assert.equal(data[2].name, '2.json')
+
+          done()
+        })
+      })
+    })
+
+  })
+
+  describe('getData', () => {
+    const inputData = "some test data"
+    let versions
+    let endpointPath
+
+    beforeEach(project.init)
+
+    beforeEach(done => {
+      const testUrl = 'http://www.someurl.com/api/v1/stuff'
+      const epName = utils.endpointNameFromPath(testUrl)
+      const opts = {port: '1234', action: 'get'}
+
+      endpointPath = path.join(storage.storagePath, opts.port, opts.action, epName)
+      storage.endpoints.create(testUrl, opts, err => {
+        assert.notOk(err)
+
+        versions = storage.versions(testUrl, opts)
+        done()
+      })
+
+    })
+
+    beforeEach(done => {
+      fs.writeFile(path.join(endpointPath, '0.json'), inputData + '0', err => {
+        assert.notOk(err)
+
+        fs.writeFile(path.join(endpointPath, '1.json'), inputData + '1', err => {
+          assert.notOk(err)
+
+          fs.writeFile(path.join(endpointPath, '2.json'), inputData + '2', err => {
+            assert.notOk(err)
+            done()
+          })
+        })
+      })
+    })
+
+    it('accepts a version number and returns data', done => {
+      versions.getData(0, (err, data) => {
+        assert.notOk(err)
+        assert.equal(data, inputData + '0')
+
+        versions.getData("1", (err, data) => {
+          assert.notOk(err)
+          assert.equal(data, inputData + '1')
+
+          versions.getData("2", (err, data) => {
+            assert.notOk(err)
+            assert.equal(data, inputData + '2')
+
+            done()
+          })
+        })
+      })
+    })
+
+    it('responds with error if version not found ', done => {
+      versions.getData("5", (err, data) => {
+        assert.isObject(err)
+        assert.notOk(data)
+        done()
+      })
+    })
+  })
+
 })

@@ -65,20 +65,23 @@ function getRoot(cb, dots) {
   })
 }
 
-function addEndpoint(url, cb) {
+function addEndpoint(url, opts, cb) {
   getRoot((err, rootPath) => {
+    const config = configFactory(rootPath)
     const storage = storageFactory(rootPath)
     const endpoints = storage.endpoints
 
     if (err || !rootPath) {
-      cb(err || {message: 'Project root not found'})
+      cb(err || { message: 'Project root not found' })
     } else {
+      config.addEndpoint(url, opts, (err, info) => {
+        if (err) { cb(err); return }
 
-      // TODO add endpoint to config
-      endpoints.create(url, err => {
-        if (err) {cb(err); return}
+        endpoints.create(info.url, info, err => {
+          if (err) { cb(err); return }
 
-        cb()
+          cb()
+        })
       })
     }
   })

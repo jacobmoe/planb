@@ -188,7 +188,7 @@ describe('config/index', () => {
         config.addEndpoint(url, opts, err => {
           assert.notOk(err)
 
-          config.addEndpoint(url, opts, err => {
+          config.addEndpoint(url, opts, (err, response) => {
             assert.notOk(err)
 
             config.read((err, configData) => {
@@ -267,6 +267,31 @@ describe('config/index', () => {
 
             assert.isObject(configData.endpoints["5000"])
             assert.equal(configData.endpoints["5000"].get.length, 1)
+
+            done()
+          })
+        })
+      })
+
+      it('returns an info object describing new endpoint', done => {
+        config.addEndpoint(url, {}, (err, info) => {
+          assert.notOk(err)
+
+          assert.deepEqual(info, {
+            url: utils.cleanUrl(url),
+            port: "5000",
+            action: "get"
+          })
+
+          const opts = {port: '1234', action: 'post'}
+          config.addEndpoint(url + '/other', opts, (err, info) => {
+            assert.notOk(err)
+
+            assert.deepEqual(info, {
+              url: utils.cleanUrl(url + '/other'),
+              port: "1234",
+              action: "post"
+            })
 
             done()
           })

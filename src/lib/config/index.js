@@ -70,7 +70,7 @@ export default function (projectPath) {
       if (err) {
         cb({message: 'Error updating project config', data: err})
       } else {
-        cb()
+        cb(null, data)
       }
     })
   }
@@ -121,7 +121,9 @@ export default function (projectPath) {
       endpoints[port] = newEndpoint(opts)
     }
 
-    return addEndpointToAction(endpoints[port], action, url)
+    addEndpointToAction(endpoints[port], action, url)
+
+    return {port: port, action: action, url: url}
   }
 
   function addEndpointForDefault(endpoints, url, opts) {
@@ -140,7 +142,9 @@ export default function (projectPath) {
       port = defaults.port
     }
 
-    return addEndpointToAction(endpoints[port], action, url)
+    addEndpointToAction(endpoints[port], action, url)
+
+    return {port: port, action: action, url: url}
   }
 
   /*
@@ -154,7 +158,10 @@ export default function (projectPath) {
   * supplied port number. If not found, a new config item is created.
   * Once we have the config item, first try to add the url to the
   * given action. If it doesn't exist, create a new one.
-  * The udpated data is then written back to the file
+  * The updated data is then written back to the file
+  *
+  * Returns an info object describing new endpoint
+  * Includes port, action and url
   */
   function addEndpoint(url, opts, cb) {
     opts = opts || {}
@@ -163,15 +170,20 @@ export default function (projectPath) {
       if (err) { cb(err); return }
 
       let endpoints = configData.endpoints || []
+      let info
       url = utils.cleanUrl(url)
 
       if (opts.port) {
-        addEndpointForPort(endpoints, url, opts.port, opts)
+        info = addEndpointForPort(endpoints, url, opts.port, opts)
       } else {
-        addEndpointForDefault(endpoints, url, opts)
+        info = addEndpointForDefault(endpoints, url, opts)
       }
 
-      update(configData, cb)
+      update(configData, err => {
+        if (err) { cb(err); return }
+
+        cb(null, info)
+      })
     })
   }
 

@@ -142,7 +142,7 @@ describe('controller: project', () => {
     it('accepts a url and creates an endpoint directory', done => {
       const testUrl = 'http://www.someurl.com/api/v1/stuff'
 
-      project.addEndpoint(testUrl, err => {
+      project.addEndpoint(testUrl, {}, err => {
         assert.notOk(err)
 
         project.getRoot((err, rootPath) => {
