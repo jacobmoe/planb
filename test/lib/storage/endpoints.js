@@ -17,20 +17,44 @@ describe('storage/endpoints', () => {
   describe('create', () => {
     beforeEach(project.init)
 
-    it('accepts a path, a url and creats an endpoint directory', done => {
-      project.getRoot((err, rootPath) => {
-        assert.isNull(err)
+    it('accepts a url, options and creates an endpoint directory', done => {
+      const testUrl = 'http://www.someurl.com/api/v1/stuff'
+      const opts = {port: '1234', action: 'get'}
 
-        const dataPath = path.join(rootPath, storageFactory.dataDirName)
-        const testUrl = 'http://www.someurl.com/api/v1/stuff'
+      endpoints.create(testUrl, opts, err => {
+        assert.notOk(err)
 
-        endpoints.create(testUrl, {}, err => {
+        fs.readdir(path.join(storagePath, opts.port, opts.action), (err, files) => {
           assert.notOk(err)
+          assert.equal(files[0], 'www.someurl.com:api:v1:stuff')
+          done()
+        })
+      })
+    })
+  })
 
-          fs.readdir(dataPath, (err, files) => {
+  describe('remove', () => {
+    beforeEach(project.init)
+
+    it('accepts a path, a url, options and creates an endpoint directory', done => {
+      const testUrl = 'http://www.someurl.com/api/v1/stuff'
+      const opts = {port: '1234', action: 'get'}
+
+      endpoints.create(testUrl, opts, err => {
+        assert.notOk(err)
+
+        fs.readdir(path.join(storagePath, opts.port, opts.action), (err, files) => {
+          assert.notOk(err)
+          assert.equal(files[0], 'www.someurl.com:api:v1:stuff')
+
+          endpoints.remove(testUrl, opts, err => {
             assert.notOk(err)
-            assert.equal(files[0], 'www.someurl.com:api:v1:stuff')
-            done()
+
+            fs.readdir(path.join(storagePath, opts.port, opts.action), (err, files) => {
+              assert.notOk(err)
+              assert.equal(files.length, 0)
+              done()
+            })
           })
         })
       })

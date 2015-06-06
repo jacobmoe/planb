@@ -38,13 +38,12 @@ describe('controller: project', () => {
 
       it('adds default config content', done => {
         const expected = {
-          "endpoints": [
-            {
-              "port": 5000,
+          "endpoints": {
+            "5000": {
               "get": [],
               "default": true
             }
-          ]
+          }
         }
 
         project.init(initErr => {

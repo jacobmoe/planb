@@ -365,4 +365,74 @@ describe('config/index', () => {
     })
   })
 
+  describe('setDefaultPort', () => {
+    context('project is not initialized', () => {
+      it('returns an error', done => {
+        config.setDefaultPort("1234", (err, port) => {
+          assert.isObject(err)
+          assert.notOk(port)
+          done()
+        })
+      })
+    })
+
+    context('project is initialized', () => {
+      beforeEach(project.init)
+
+      it('unsets current default and sets new default', done => {
+        config.setDefaultPort("1234", err => {
+          assert.notOk(err)
+
+          config.read((err, configData) => {
+            assert.isNull(err)
+            assert.isTrue(configData.endpoints["1234"].default)
+            assert.isUndefined(configData.endpoints["5000"].default)
+
+            done()
+          })
+        })
+      })
+
+      it('returns an error for an invalid port', done => {
+        config.setDefaultPort("abcd", err => {
+          assert.isObject(err)
+
+          config.read((err, configData) => {
+            assert.isNull(err)
+            assert.isTrue(configData.endpoints["5000"].default)
+            assert.isUndefined(configData.endpoints.abcd)
+
+            done()
+          })
+        })
+      })
+    })
+  })
+
+  describe('getDefaultPort', () => {
+    context('project is not initialized', () => {
+      it('returns an error', done => {
+        config.getDefaultPort((err, port) => {
+          assert.isObject(err)
+          assert.notOk(port)
+          done()
+        })
+      })
+    })
+
+    context('project is initialized', () => {
+      beforeEach(project.init)
+
+      it('returns the default port', done => {
+        config.getDefaultPort((err, port) => {
+          assert.isNull(err)
+          assert.equal(port, "5000")
+          done()
+        })
+      })
+    })
+
+  })
+
+
 })

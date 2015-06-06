@@ -1,9 +1,9 @@
-import fs from 'fs'
+import fs from 'fs-extra'
 
 import packageJson from '../../package'
 
-function createDir(path, cb) {
-  fs.mkdir(path, err => {
+function createDirs(path, cb) {
+  fs.mkdirs(path, err => {
     if (!err) { cb(null); return }
 
     if (err.code == 'EEXIST') cb(null)
@@ -168,7 +168,7 @@ function getProjectFileName(ext) {
 }
 
 export default {
-  createDir: createDir,
+  createDirs: createDirs,
   endpointNameFromPath: endpointNameFromPath,
   pathFromEndpointName: pathFromEndpointName,
   cleanUrl: cleanUrl,

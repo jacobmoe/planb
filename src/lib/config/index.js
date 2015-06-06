@@ -236,13 +236,51 @@ export default function (projectPath) {
     })
   }
 
+  function getDefaultPort(cb) {
+    read((err, configData) => {
+      if (err) { cb(err); return }
+
+      const endpoints = configData.endpoints || []
+
+      cb(null, defaultEndpointPort(endpoints))
+    })
+  }
+
+  function setDefaultPort(port, cb) {
+    if (!validPort(port)) {
+      cb({message: 'Not a valid port'})
+      return
+    }
+
+    read((err, configData) => {
+      if (err) { cb(err); return }
+
+      const endpoints = configData.endpoints || []
+      let current = defaultEndpointPort(endpoints)
+
+      if (current && endpoints[current]) {
+        delete endpoints[current].default
+      }
+
+      if (!endpoints[port]) {
+        endpoints[port] = newEndpoint({port: port})
+      }
+
+      endpoints[port].default = true
+
+      update(configData, cb)
+    })
+  }
+
   return {
     create: create,
     read: read,
     checkForConfigFile: checkForConfigFile,
     configName: configName,
     addEndpoint: addEndpoint,
-    removeEndpoint: removeEndpoint
+    removeEndpoint: removeEndpoint,
+    getDefaultPort: getDefaultPort,
+    setDefaultPort: setDefaultPort
   }
 
 }
