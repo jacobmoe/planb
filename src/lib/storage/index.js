@@ -1,9 +1,10 @@
 import fs from 'fs'
 import path from 'path'
 
-import endpoints from './endpoints'
-import versions from './versions'
+import endpointsFactory from './endpoints'
+import versionsFactory from './versions'
 import utils from '../utils'
+import defaults from '../defaults'
 
 export const dataDirName = utils.getProjectFileName('d')
 
@@ -30,11 +31,20 @@ export default function (projectPath) {
     utils.fileExists(storagePath, cb)
   }
 
+  function versions(endpoint, opts) {
+    const port = opts.port || defaults.port
+    const action = opts.action || defaults.action
+    const name = utils.endpointNameFromPath(endpoint)
+
+    return versionsFactory(path.join(storagePath, port, action, name))
+  }
+
   return {
-    endpoints: endpoints(storagePath),
+    endpoints: endpointsFactory(storagePath),
     versions: versions,
     createDataDir: createDataDir,
-    checkForDataDir: checkForDataDir
+    checkForDataDir: checkForDataDir,
+    storagePath: storagePath
   }
 
 }

@@ -1,6 +1,5 @@
 import fs from 'fs-extra'
 import path from 'path'
-import async from 'async'
 
 import utils from '../utils.js'
 import * as defaults from '../defaults'
@@ -20,16 +19,6 @@ export default function (storagePath) {
       cb()
     })
   }
-
-  // function all(cb) {
-  //   fs.readdir(utils.dataPath, (err, files) => {
-  //     if (err) { cb(err); return }
-
-  //     cb(null, files.map(file => {
-  //       return utils.pathFromEndpointName(file)
-  //     }))
-  //   })
-  // }
 
   function remove(endpoint, opts, cb) {
     opts = opts || {}
@@ -56,7 +45,6 @@ export default function (storagePath) {
 
   return {
     create: create,
-    // all: all,
     remove: remove
   }
 
