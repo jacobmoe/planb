@@ -1,11 +1,13 @@
 import fs from 'fs-extra'
 import path from 'path'
+import nock from 'nock'
 
 // variables in ES6 imports. how?
 const srcPath = '../../' + SRC_DIR
 const project = require(srcPath + '/lib/project')
 const configFactory = require(srcPath + '/lib/config')
 const storageFactory = require(srcPath + '/lib/storage')
+const utils = require(srcPath + '/lib/utils')
 
 const dataDirName = storageFactory.dataDirName
 
@@ -137,30 +139,177 @@ describe('controller: project', () => {
   })
 
   describe('addEndpoint', () => {
-    beforeEach(project.init)
+    const testUrl = 'http://www.someurl.com/api/v1/stuff'
 
-    it('accepts a url and creates an endpoint directory', done => {
+    context('project not initialized', () => {
+      it('returns an error', done => {
+        project.addEndpoint('', {}, err => {
+          assert.isObject(err)
+          done()
+        })
+      })
+    })
+
+    context('project is initialized', () => {
+      beforeEach(project.init)
+      const config = configFactory.default(process.cwd())
+
+      it('updates config and creates directory with default options', done => {
+        project.addEndpoint(testUrl, {}, err => {
+          assert.notOk(err)
+
+          config.read((err, configData) => {
+            assert.notOk(err)
+            assert.equal(configData.endpoints['5000'].get.length, 1)
+            assert.equal(configData.endpoints['5000'].get[0], utils.cleanUrl(testUrl))
+
+            const projectPath = path.join(process.cwd(), storageFactory.dataDirName)
+            const name = utils.endpointNameFromPath(testUrl)
+            const filePath = path.join(projectPath, '5000', 'get', name)
+
+            assert.fileExists(filePath)
+            done()
+          })
+        })
+      })
+
+      it('updates config and creates directory with supplied options', done => {
+        const testUrl = 'http://www.someurl.com/api/v1/stuff'
+        const opts = {port: '1234', action: 'post'}
+
+        project.addEndpoint(testUrl, opts, err => {
+          assert.notOk(err)
+
+          config.read((err, configData) => {
+            assert.notOk(err)
+            assert.equal(configData.endpoints['5000'].get.length, 0)
+            assert.equal(configData.endpoints[opts.port][opts.action].length, 1)
+            assert.equal(configData.endpoints[opts.port][opts.action][0], utils.cleanUrl(testUrl))
+
+            const projectPath = path.join(process.cwd(), storageFactory.dataDirName)
+            const name = utils.endpointNameFromPath(testUrl)
+            const filePath = path.join(projectPath, opts.port, opts.action, name)
+
+            assert.fileExists(filePath)
+            done()
+          })
+        })
+      })
+    })
+  })
+
+  describe('removeEndpoint', () => {
+    beforeEach(project.init)
+    const config = configFactory.default(process.cwd())
+
+    it('updates config and removes directory with default options', done => {
       const testUrl = 'http://www.someurl.com/api/v1/stuff'
 
       project.addEndpoint(testUrl, {}, err => {
         assert.notOk(err)
 
-        project.getRoot((err, rootPath) => {
-          assert.isNull(err)
+        config.read((err, configData) => {
+          assert.notOk(err)
+          assert.equal(configData.endpoints['5000'].get.length, 1)
 
-          const filePath = path.join(
-            rootPath,
-            dataDirName,
-            'www.someurl.com:api:v1:stuff'
-          )
+          const projectPath = path.join(process.cwd(), storageFactory.dataDirName)
+          const name = utils.endpointNameFromPath(testUrl)
+          const filePath = path.join(projectPath, '5000', 'get', name)
 
           assert.fileExists(filePath)
-          done()
+
+          project.removeEndpoint(testUrl, {}, err => {
+            assert.notOk(err)
+
+            config.read((err, configData) => {
+              assert.notOk(err)
+              assert.equal(configData.endpoints['5000'].get.length, 0)
+
+              assert.fileDoesNotExist(filePath)
+              done()
+            })
+          })
+        })
+      })
+    })
+
+    it('updates config and removes directory with supplied options', done => {
+      const testUrl = 'http://www.someurl.com/api/v1/stuff'
+      const opts = {port: '1234', action: 'post'}
+
+      project.addEndpoint(testUrl, opts, err => {
+        assert.notOk(err)
+
+        config.read((err, configData) => {
+          assert.notOk(err)
+          assert.equal(configData.endpoints[opts.port][opts.action].length, 1)
+
+          const projectPath = path.join(process.cwd(), storageFactory.dataDirName)
+          const name = utils.endpointNameFromPath(testUrl)
+          const filePath = path.join(projectPath, opts.port, opts.action, name)
+
+          assert.fileExists(filePath)
+
+          project.removeEndpoint(testUrl, opts, err => {
+            assert.notOk(err)
+
+            config.read((err, configData) => {
+              assert.notOk(err)
+              assert.equal(configData.endpoints[opts.port][opts.action].length, 0)
+
+              assert.fileDoesNotExist(filePath)
+              done()
+            })
+          })
         })
       })
     })
 
   })
 
+  describe('fetchVersions', () => {
+    const testUrl1 = 'http://www.test.com/api/path'
+    const testUrl2 = 'http://www.test.com/api/path/2'
+
+    beforeEach(project.init)
+
+    it('adds a new version to each existing endpoint', done => {
+      nock('http://www.test.com')
+      .get('/api/path')
+      .reply(200, {content: 'some content'})
+      .get('/api/path/2')
+      .reply(200, {content: 'some more content'})
+
+      project.addEndpoint(testUrl1, {}, err => {
+        assert.notOk(err)
+
+        project.addEndpoint(testUrl2, {}, err => {
+          assert.notOk(err)
+
+          project.fetchVersions(err => {
+            assert.notOk(err)
+
+            const testName1 = utils.endpointNameFromPath(testUrl1)
+            const testName2 = utils.endpointNameFromPath(testUrl2)
+            const projectPath = path.join(process.cwd(), storageFactory.dataDirName)
+            const endpointPath1 = path.join(projectPath, '5000', 'get', testName1)
+            const endpointPath2 = path.join(projectPath, '5000', 'get', testName2)
+
+            utils.readJsonFile(path.join(endpointPath1, '0'), (err, data) => {
+              assert.notOk(err)
+              assert.deepEqual(data, {content: "some content"})
+
+              utils.readJsonFile(path.join(endpointPath2, '0'), (err, data) => {
+                assert.notOk(err)
+                assert.deepEqual(data, {content: "some more content"})
+
+                done()
+              })
+            })
+          })
+        })
+      })
+    })
+  })
 
 })

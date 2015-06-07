@@ -387,6 +387,26 @@ describe('config/index', () => {
           })
         })
       })
+
+      it('returns an info object describing removed endpoint', done => {
+        const opts = {port: '1234', action: 'post'}
+
+        config.addEndpoint(url, opts, err => {
+          assert.notOk(err)
+
+          config.removeEndpoint(url, opts, (err, info) => {
+            assert.notOk(err)
+
+            assert.deepEqual(info, {
+              port: opts.port,
+              action: opts.action,
+              url: utils.cleanUrl(url)
+            })
+
+            done()
+          })
+        })
+      })
     })
   })
 

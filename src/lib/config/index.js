@@ -3,9 +3,6 @@ import path from 'path'
 import utils from '../utils'
 import * as defaults from '../defaults'
 
-const portMin = 1024
-const portMax = 65535
-
 export const defaultConfigData = {
   "endpoints": {
     [defaults.port]: {
@@ -75,17 +72,6 @@ export default function (projectPath) {
     })
   }
 
-  function validAction(action) {
-    return defaults.allowedActions.indexOf(action) > -1
-  }
-
-  function validPort(port) {
-    const isNumber = !isNaN(port)
-    const validPortRange = port > portMin && port < portMax
-
-    return isNumber && validPortRange
-  }
-
   function defaultEndpointPort(endpoints) {
     let port = utils.findKeyBy(endpoints, {default: true})
 
@@ -97,7 +83,7 @@ export default function (projectPath) {
   }
 
   function newEndpoint(opts) {
-    const action = validAction(opts.action) ? opts.action : defaults.action
+    const action = utils.validAction(opts.action) ? opts.action : defaults.action
 
     return { [action]: [] }
   }
@@ -115,7 +101,7 @@ export default function (projectPath) {
   }
 
   function addEndpointForPort(endpoints, url, port, opts) {
-    const action = validAction(opts.action) ? opts.action : defaults.action
+    const action = utils.validAction(opts.action) ? opts.action : defaults.action
 
     if (!endpoints[port]) {
       endpoints[port] = newEndpoint(opts)
@@ -127,7 +113,7 @@ export default function (projectPath) {
   }
 
   function addEndpointForDefault(endpoints, url, opts) {
-    const action = validAction(opts.action) ? opts.action : defaults.action
+    const action = utils.validAction(opts.action) ? opts.action : defaults.action
     let port
 
     if (Object.keys(endpoints).length) {
@@ -244,7 +230,11 @@ export default function (projectPath) {
       const urls = removeEndpointFromAction(endpoints[port], action, url)
       configData.endpoints[port][action] = urls
 
-      update(configData, cb)
+      update(configData, err => {
+        if (err) { cb(err); return }
+
+        cb(null, {port: port, action: action, url: url})
+      })
     })
   }
 
@@ -259,7 +249,7 @@ export default function (projectPath) {
   }
 
   function setDefaultPort(port, cb) {
-    if (!validPort(port)) {
+    if (!utils.validPort(port)) {
       cb({message: 'Not a valid port'})
       return
     }

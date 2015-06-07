@@ -1,6 +1,7 @@
 import fs from 'fs-extra'
 
 import packageJson from '../../package'
+import * as defaults from './defaults'
 
 function createDirs(path, cb) {
   fs.mkdirs(path, err => {
@@ -167,6 +168,20 @@ function getProjectFileName(ext) {
   return fileName
 }
 
+function validAction(action) {
+  return defaults.allowedActions.indexOf(action) > -1
+}
+
+function validPort(port) {
+  const portMin = 1024
+  const portMax = 65535
+
+  const isNumber = !isNaN(port)
+  const validPortRange = port > portMin && port < portMax
+
+  return isNumber && validPortRange
+}
+
 export default {
   createDirs: createDirs,
   endpointNameFromPath: endpointNameFromPath,
@@ -179,5 +194,7 @@ export default {
   findIndexBy: findIndexBy,
   findKeyBy: findKeyBy,
   findBy: findBy,
-  getProjectFileName: getProjectFileName
+  getProjectFileName: getProjectFileName,
+  validAction: validAction,
+  validPort: validPort
 }
