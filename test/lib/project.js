@@ -310,6 +310,46 @@ describe('controller: project', () => {
         })
       })
     })
+
+    it('creates non-existing endpoints', done => {
+      const config = configFactory.default(process.cwd())
+
+      nock('http://www.test.com')
+      .get('/api/path')
+      .reply(200, {content: 'some content'})
+      .get('/api/path/2')
+      .reply(200, {content: 'some more content'})
+
+      config.addEndpoint(testUrl1, {}, err => {
+        assert.notOk(err)
+
+        config.addEndpoint(testUrl2, {}, err => {
+          assert.notOk(err)
+
+          project.fetchVersions(err => {
+            assert.notOk(err)
+
+            const testName1 = utils.endpointNameFromPath(testUrl1)
+            const testName2 = utils.endpointNameFromPath(testUrl2)
+            const projectPath = path.join(process.cwd(), storageFactory.dataDirName)
+            const endpointPath1 = path.join(projectPath, '5000', 'get', testName1)
+            const endpointPath2 = path.join(projectPath, '5000', 'get', testName2)
+
+            utils.readJsonFile(path.join(endpointPath1, '0'), (err, data) => {
+              assert.notOk(err)
+              assert.deepEqual(data, {content: "some content"})
+
+              utils.readJsonFile(path.join(endpointPath2, '0'), (err, data) => {
+                assert.notOk(err)
+                assert.deepEqual(data, {content: "some more content"})
+
+                done()
+              })
+            })
+          })
+        })
+      })
+    })
   })
 
   describe('itemize', () => {

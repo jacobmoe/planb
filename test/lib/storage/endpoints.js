@@ -60,4 +60,32 @@ describe('storage/endpoints', () => {
       })
     })
   })
+
+  describe('checkEndpoint', () => {
+    beforeEach(project.init)
+
+    it('returns true if endpoint exists', done => {
+      const testUrl = 'http://www.someurl.com/api/v1/stuff'
+
+      endpoints.create(testUrl, {}, err => {
+        assert.notOk(err)
+
+        endpoints.checkEndpoint(testUrl, {}, (err, exists) => {
+          assert.notOk(err)
+          assert.isTrue(exists)
+          done()
+        })
+      })
+    })
+
+    it('returns false if endpoint does not exist', done => {
+      const testUrl = 'http://www.someurl.com/api/v1/stuff'
+
+      endpoints.checkEndpoint(testUrl, {}, (err, exists) => {
+        assert.notOk(err)
+        assert.isFalse(exists)
+        done()
+      })
+    })
+  })
 })

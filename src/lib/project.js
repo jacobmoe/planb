@@ -99,29 +99,46 @@ function removeEndpoint(url, opts, cb) {
  */
 function fetchVersions(callback, reqCallback, reqErrCallback) {
   const transform = configTransformer((storage, item, cb) => {
+    if (item.action !== 'get') return
     let url = item.url
+    const opts = { port: item.port, action: item.action }
 
-    if (!url.match(/^https?:\/\/.*/)) url = `http://${url}`
+    ensureEndpointExistance(storage, url, opts, err => {
+      if (err) { callback(err); return }
 
-    request(url, (error, response, body) => {
-      const opts = { port: item.port, action: item.action }
-      const versions = storage.versions(item.url, opts)
-      if (error) { cb({url: item.url, data: error}); return }
+      if (!url.match(/^https?:\/\/.*/)) url = `http://${url}`
 
-      if (response.statusCode != 200) {
-        cb({url: item.url, status: response.statusCode})
-        return
-      }
+      request(url, (error, response, body) => {
+        const versions = storage.versions(item.url, opts)
+        if (error) { cb({url: item.url, data: error}); return }
 
-      if (reqCallback) reqCallback(item.url)
+        if (response.statusCode != 200) {
+          cb({url: item.url, status: response.statusCode})
+          return
+        }
 
-      versions.create(body, cb)
+        if (reqCallback) reqCallback(item.url)
+
+        versions.create(body, cb)
+      })
     })
   }, (err, res) => {
     if (err && reqErrCallback) reqErrCallback(err.url)
   })
 
   transform(callback)
+}
+
+function ensureEndpointExistance(storage, url, opts, cb) {
+  storage.endpoints.checkEndpoint(url, opts, (err, exists) => {
+    if (err) { cb(err); return }
+
+    if (exists) {
+      cb()
+    } else {
+      storage.endpoints.create(url, opts, cb)
+    }
+  })
 }
 
 /*

@@ -3,6 +3,16 @@
 import program from 'commander'
 import manager from './lib/manager'
 import server from './lib/server'
+import * as defaults from './lib/defaults'
+
+program
+  .option('-p, --port <port>', 'Set port. Default: ' + defaults.port)
+  .option('-a, --action <action>', 'Set action. Default: ' + defaults.action)
+
+program
+  .command('init')
+  .description('Initialize a project in current directory')
+  .action(manager.init)
 
 program
   .command('add [url]')

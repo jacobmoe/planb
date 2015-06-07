@@ -6,27 +6,16 @@ import * as defaults from '../defaults'
 
 export default function (storagePath) {
 
+  function checkEndpoint(url, opts, cb) {
+    utils.fileExists(getEndpointPath(url, opts), cb)
+  }
+
   function create(url, opts, cb) {
-    opts = opts || {}
-    const port = opts.port || defaults.port
-    const action = opts.action || defaults.action
-    const name = utils.endpointNameFromPath(url)
-
-    const namePath = path.join(storagePath, port, action, name)
-    utils.createDirs(namePath, err => {
-      if (err) { cb(err); return }
-
-      cb()
-    })
+    utils.createDirs(getEndpointPath(url, opts), cb)
   }
 
   function remove(endpoint, opts, cb) {
-    opts = opts || {}
-    const port = opts.port || defaults.port
-    const action = opts.action || defaults.action
-    const name = utils.endpointNameFromPath(endpoint)
-
-    const endpointPath = path.join(storagePath, port, action, name)
+    const endpointPath = getEndpointPath(endpoint, opts)
 
     utils.fileExists(endpointPath, (err, exists) => {
       if (err) { cb(err); return }
@@ -43,9 +32,19 @@ export default function (storagePath) {
     })
   }
 
+  function getEndpointPath(endpoint, opts) {
+    opts = opts || {}
+    const port = opts.port || defaults.port
+    const action = opts.action || defaults.action
+    const name = utils.endpointNameFromPath(endpoint)
+
+    return path.join(storagePath, port, action, name)
+  }
+
   return {
     create: create,
-    remove: remove
+    remove: remove,
+    checkEndpoint: checkEndpoint
   }
 
 }

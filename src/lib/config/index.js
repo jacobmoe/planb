@@ -290,8 +290,7 @@ export default function (projectPath) {
         if (!utils.validPort(port)) return
 
         Object.keys(endpoints[port]).forEach(action => {
-          if (action !== 'get') return
-
+          if (!utils.validAction(action)) return
           const urls = endpoints[port][action] || []
 
           urls.forEach(url => {

@@ -19,7 +19,7 @@ export default function (projectPath) {
   */
   function createDataDir(cb) {
     fs.mkdir(storagePath, err => {
-      if (err && err.code !== 'EXIST') {
+      if (err && err.code !== 'EEXIST') {
         cb({message: 'Error creating data directory', data: err})
       } else {
         cb()
