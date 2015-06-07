@@ -67,121 +67,144 @@ function getRoot(cb, dots) {
 }
 
 function addEndpoint(url, opts, cb) {
-  getRoot((err, rootPath) => {
-    if (err || !rootPath) {
-      cb(err || { message: 'Project root not found' })
-    } else {
-      const config = configFactory(rootPath)
-      const storage = storageFactory(rootPath)
-      const endpoints = storage.endpoints
+  buildConfigStorage((config, storage) => {
+    config.addEndpoint(url, opts, (err, info) => {
+      if (err) { cb(err); return }
 
-      config.addEndpoint(url, opts, (err, info) => {
+      storage.endpoints.create(info.url, info, err => {
         if (err) { cb(err); return }
 
-        endpoints.create(info.url, info, err => {
-          if (err) { cb(err); return }
-
-          cb()
-        })
+        cb()
       })
-    }
-  })
+    })
+  }, cb)
 }
 
 function removeEndpoint(url, opts, cb) {
+  buildConfigStorage((config, storage) => {
+    config.removeEndpoint(url, opts, (err, info) => {
+      if (err) { cb(err); return }
+
+      storage.endpoints.remove(info.url, info, err => {
+        if (err) { cb(err); return }
+
+        cb()
+      })
+    })
+  }, cb)
+}
+
+/*
+ * Make request against all GET endpoints and create a new version
+ */
+function fetchVersions(callback, reqCallback, reqErrCallback) {
+  const transform = configTransformer((storage, item, cb) => {
+    let url = item.url
+
+    if (!url.match(/^https?:\/\/.*/)) url = `http://${url}`
+
+    request(url, (error, response, body) => {
+      const opts = { port: item.port, action: item.action }
+      const versions = storage.versions(item.url, opts)
+      if (error) { cb({url: item.url, data: error}); return }
+
+      if (response.statusCode != 200) {
+        cb({url: item.url, status: response.statusCode})
+        return
+      }
+
+      if (reqCallback) reqCallback(item.url)
+
+      versions.create(body, cb)
+    })
+  }, (err, res) => {
+    if (err && reqErrCallback) reqErrCallback(err.url)
+  })
+
+  transform(callback)
+}
+
+/*
+ * Returns an array to represent each item in storage
+ * Items include url, port, action and versions
+ */
+function itemize(callback) {
+  const transform = configTransformer((storage, item, cb) => {
+    const opts = { port: item.port, action: item.action }
+    const versions = storage.versions(item.url, opts)
+
+    versions.all((err, res) => {
+      if (err) { cb(err); return }
+
+      item.versions = res
+
+      cb(null, item)
+    })
+  })
+
+  transform(callback)
+}
+
+/* Remove current version from endpoint */
+function rollbackVersion(url, opts, cb) {
+  buildConfigStorage((config, storage) => {
+    const versions = storage.versions(url, opts)
+
+    versions.current((err, currentVersion) => {
+      if (err) { cb(err); return }
+
+      versions.remove(currentVersion, cb)
+    })
+  }, cb)
+}
+
+/*
+ * Convenience method to get rootPath and build config
+ * and storage instances
+ */
+function buildConfigStorage(success, fail) {
   getRoot((err, rootPath) => {
     if (err || !rootPath) {
-      cb(err || { message: 'Project root not found' })
+      fail(err || { message: 'Project root not found' })
     } else {
       const config = configFactory(rootPath)
       const storage = storageFactory(rootPath)
-      const endpoints = storage.endpoints
 
-      config.removeEndpoint(url, opts, (err, info) => {
-        if (err) { cb(err); return }
-
-        endpoints.remove(info.url, info, err => {
-          if (err) { cb(err); return }
-
-          cb()
-        })
-      })
+      success(config, storage)
     }
   })
 }
 
-function fetchVersions(callback, reqCallback, reqErrCallback) {
-  getRoot((err, rootPath) => {
-    if (err || !rootPath) {
-      callback(err || { message: 'Project root not found' })
-    } else {
-      const config = configFactory(rootPath)
-      const storage = storageFactory(rootPath)
-
-      flattenedConfig(config, (err, arr) => {
+/*
+ * Convenience method for modifying the flattened config.
+ * Accepts two hooks - the first processes the flattened
+ * config item. The second is called after all items are
+ * processed.
+ *
+ * Returns a function that accepts a callback
+ */
+function configTransformer(itemHook, endHook) {
+  return function (callback) {
+    buildConfigStorage((config, storage) => {
+      config.flattened((err, arr) => {
         if (err) { callback(err); return }
 
         const jobs = arr.reduce((collection, item) => {
           collection.push(cb => {
-            const versions = storage.versions(item.url, item.opts)
-            let url = item.url
-
-            if (!url.match(/^https?:\/\/.*/)) url = `http://${url}`
-
-            request(url, (error, response, body) => {
-              if (error) { cb({url: item.url, data: error}); return }
-
-              if (response.statusCode != 200) {
-                cb({url: item.url, status: response.statusCode})
-                return
-              }
-
-              if (reqCallback) reqCallback(item.url)
-
-              versions.create(body, cb)
-            })
+            itemHook(storage, item, cb)
           })
 
           return collection
         }, [])
 
         async.parallel(jobs, (err, res) => {
-          if (err && reqErrCallback) reqErrCallback(err.url)
+          if (endHook) endHook(err, res)
 
-          callback()
+          callback(null, res)
         })
       })
-    }
-  })
-}
-
-function flattenedConfig(config, cb) {
-  let result = []
-
-  config.read((err, configData) => {
-    if (err) { cb(err); return }
-
-    const endpoints = configData.endpoints || []
-
-    Object.keys(endpoints).forEach(port => {
-      if (!utils.validPort(port)) return
-
-      Object.keys(endpoints[port]).forEach(action => {
-        if (action !== 'get') return
-
-        const urls = endpoints[port][action] || []
-
-        urls.forEach(url => {
-          result.push({
-            url: url,
-            opts: {port: port, action: action}
-          })
-        })
-      })
-    })
-
-    cb(null, result)
-  })
+    }, callback)
+  }
 }
 
 export default {
@@ -189,5 +212,7 @@ export default {
   getRoot: getRoot,
   addEndpoint: addEndpoint,
   removeEndpoint: removeEndpoint,
-  fetchVersions: fetchVersions
+  fetchVersions: fetchVersions,
+  itemize: itemize,
+  rollbackVersion: rollbackVersion
 }

@@ -4,7 +4,7 @@ import path from 'path'
 import endpointsFactory from './endpoints'
 import versionsFactory from './versions'
 import utils from '../utils'
-import defaults from '../defaults'
+import * as defaults from '../defaults'
 
 export const dataDirName = utils.getProjectFileName('d')
 

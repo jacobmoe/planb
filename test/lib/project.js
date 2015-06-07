@@ -312,4 +312,122 @@ describe('controller: project', () => {
     })
   })
 
+  describe('itemize', () => {
+    const testUrl1 = 'http://www.test.com/api/path'
+    const testUrl2 = 'http://www.test.com/api/path/2'
+
+    beforeEach(project.init)
+
+    beforeEach(done => {
+      nock('http://www.test.com')
+      .get('/api/path')
+      .times(2)
+      .reply(200, {content: 'some content'})
+      .get('/api/path/2')
+      .times(2)
+      .reply(200, {content: 'some more content'})
+
+      project.addEndpoint(testUrl1, {}, err => {
+        assert.notOk(err)
+
+        project.addEndpoint(testUrl2, {}, err => {
+          assert.notOk(err)
+
+          project.fetchVersions(err => {
+            assert.notOk(err)
+
+            project.fetchVersions(err => {
+              assert.notOk(err)
+
+              done()
+            })
+          })
+        })
+      })
+    })
+
+    it('returns an array of config items that include versions', done => {
+      project.itemize((err, items) => {
+        assert.notOk(err)
+
+        assert.equal(items.length, 2)
+        assert.equal(items[0].url, utils.cleanUrl(testUrl1))
+        assert.equal(items[0].port, '5000')
+        assert.equal(items[0].action, 'get')
+        assert.equal(items[0].versions.length, 2)
+        assert.equal(items[0].versions[0].name, '0')
+        assert.equal(items[0].versions[1].name, '1')
+
+        assert.equal(items[1].url, utils.cleanUrl(testUrl2))
+        assert.equal(items[1].port, '5000')
+        assert.equal(items[1].action, 'get')
+        assert.equal(items[1].versions.length, 2)
+        assert.equal(items[1].versions[0].name, '0')
+        assert.equal(items[1].versions[1].name, '1')
+
+        done()
+      })
+    })
+  })
+
+  describe('rollbackVersion', () => {
+    const testUrl = 'http://www.test.com/api/path'
+
+    beforeEach(project.init)
+
+    beforeEach(done => {
+      nock('http://www.test.com')
+      .get('/api/path')
+      .times(2)
+      .reply(200, {content: 'some content'})
+      .get('/api/path/2')
+      .times(2)
+      .reply(200, {content: 'some more content'})
+
+      project.addEndpoint(testUrl, {}, err => {
+        assert.notOk(err)
+
+        project.fetchVersions(err => {
+          assert.notOk(err)
+
+          project.fetchVersions(err => {
+            assert.notOk(err)
+
+            done()
+          })
+        })
+      })
+    })
+
+    it('removes current version from endpoint', done => {
+      const testName = utils.endpointNameFromPath(testUrl)
+      const endpointPath = path.join(process.cwd(), dataDirName, '5000', 'get', testName)
+
+      fs.readdir(endpointPath, (err, files) => {
+        assert.notOk(err)
+        assert.deepEqual(files, ['0', '1'])
+
+        project.rollbackVersion(testUrl, {}, err => {
+          assert.notOk(err)
+
+          fs.readdir(endpointPath, (err, files) => {
+            assert.notOk(err)
+            assert.deepEqual(files, ['0'])
+
+            project.rollbackVersion(testUrl, {}, err => {
+              assert.notOk(err)
+
+              fs.readdir(endpointPath, (err, files) => {
+                assert.notOk(err)
+                assert.equal(files.length, 0)
+
+                done()
+              })
+            })
+          })
+        })
+      })
+    })
+  })
+
 })

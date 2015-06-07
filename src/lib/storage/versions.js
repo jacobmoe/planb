@@ -135,23 +135,22 @@ export default function(endpointPath) {
     })
   }
 
-  // function remove(versionNum, cb) {
-  //   const name = utils.endpointNameFromPath(endpointUrl)
+  function remove(versionFileName, cb) {
+    const versionPath = path.join(endpointPath, versionFileName)
 
-  //   const versionPath = utils.dataPath + name + '/' + version
-  //   fs.unlink(versionPath, err => {
-  //     if (err) { cb(err); return }
+    fs.unlink(versionPath, err => {
+      if (err) { cb(err); return }
 
-  //     cb()
-  //   })
-  // }
+      cb()
+    })
+  }
 
   return {
     create: create,
     all: all,
     current: current,
-    getData: getData
-    // remove: remove
+    getData: getData,
+    remove: remove
   }
 
 }

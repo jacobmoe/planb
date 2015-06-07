@@ -274,6 +274,40 @@ export default function (projectPath) {
     })
   }
 
+  /*
+   * Returns a convenient array of config items that include
+   * url, port and action
+   */
+  function flattened(cb) {
+    let result = []
+
+    read((err, configData) => {
+      if (err) { cb(err); return }
+
+      const endpoints = configData.endpoints || []
+
+      Object.keys(endpoints).forEach(port => {
+        if (!utils.validPort(port)) return
+
+        Object.keys(endpoints[port]).forEach(action => {
+          if (action !== 'get') return
+
+          const urls = endpoints[port][action] || []
+
+          urls.forEach(url => {
+            result.push({
+              url: url,
+              port: port,
+              action: action
+            })
+          })
+        })
+      })
+
+      cb(null, result)
+    })
+  }
+
   return {
     create: create,
     read: read,
@@ -282,7 +316,8 @@ export default function (projectPath) {
     addEndpoint: addEndpoint,
     removeEndpoint: removeEndpoint,
     getDefaultPort: getDefaultPort,
-    setDefaultPort: setDefaultPort
+    setDefaultPort: setDefaultPort,
+    flattened: flattened
   }
 
 }

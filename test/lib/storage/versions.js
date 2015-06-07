@@ -324,4 +324,92 @@ describe('storage/versions', () => {
     })
   })
 
+  describe('remove', () => {
+    const inputData = "some test data"
+    let versions
+    let endpointPath
+
+    beforeEach(project.init)
+
+    beforeEach(done => {
+      const testUrl = 'http://www.someurl.com/api/v1/stuff'
+      const epName = utils.endpointNameFromPath(testUrl)
+      const opts = {port: '1234', action: 'get'}
+
+      endpointPath = path.join(storage.storagePath, opts.port, opts.action, epName)
+      storage.endpoints.create(testUrl, opts, err => {
+        assert.notOk(err)
+
+        versions = storage.versions(testUrl, opts)
+        done()
+      })
+
+    })
+
+    beforeEach(done => {
+      fs.writeFile(path.join(endpointPath, '0.json'), inputData + '0', err => {
+        assert.notOk(err)
+
+        fs.writeFile(path.join(endpointPath, '1.json'), inputData + '1', err => {
+          assert.notOk(err)
+
+          fs.writeFile(path.join(endpointPath, '2.json'), inputData + '2', err => {
+            assert.notOk(err)
+            done()
+          })
+        })
+      })
+    })
+
+    it('removes the given version file name', done => {
+      versions.all((err, versionData) => {
+        assert.notOk(err)
+
+        assert.equal(versionData.length, 3)
+        assert.deepEqual(
+          versionData.map(v => { return v.name }),
+          ['0.json', '1.json', '2.json']
+        )
+
+        versions.remove('1.json', err => {
+          assert.notOk(err)
+
+          versions.all((err, versionData) => {
+            assert.notOk(err)
+
+            assert.equal(versionData.length, 2)
+            assert.deepEqual(
+              versionData.map(v => { return v.name }),
+              ['0.json', '2.json']
+            )
+
+            versions.remove('2.json', err => {
+              assert.notOk(err)
+
+              versions.all((err, versionData) => {
+                assert.notOk(err)
+
+                assert.equal(versionData.length, 1)
+                assert.deepEqual(
+                  versionData.map(v => { return v.name }),
+                  ['0.json']
+                )
+
+                done()
+              })
+            })
+          })
+        })
+      })
+    })
+
+    it('returns an error if version not found', done => {
+      versions.remove('5.json', err => {
+        assert.isObject(err)
+        done()
+      })
+    })
+
+  })
+
 })
