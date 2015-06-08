@@ -122,7 +122,7 @@ function fetchVersions(callback, reqCallback, reqErrCallback) {
           return
         }
 
-        if (reqCallback) reqCallback(item.url)
+        if (reqCallback) reqCallback(item)
 
         versions.create(body, cb)
       })
@@ -148,7 +148,9 @@ function ensureEndpointExistance(storage, url, opts, cb) {
 
 /*
  * Returns an array to represent each item in storage
- * Items include url, port, action and versions
+ *
+ * Items include url, port, action, versions info array
+ * and name of current version
  */
 function itemize(callback) {
   const transform = configTransformer((storage, item, cb) => {
@@ -157,10 +159,15 @@ function itemize(callback) {
 
     versions.all((err, res) => {
       if (err) { cb(err); return }
-
       item.versions = res
 
-      cb(null, item)
+      versions.current((err, current) => {
+        if (err) { cb(err); return }
+        item.current = current
+
+        cb(null, item)
+      })
+
     })
   })
 

@@ -31,8 +31,8 @@ export default {
       if (err) {
         console.log("Error fetching new versions.", err.message)
       }
-    }, url => {
-      console.log("Updating", url)
+    }, item => {
+      console.log("Updating", item.url, "for port", item.port)
     }, url => {
       console.log("Could not update", url)
     })

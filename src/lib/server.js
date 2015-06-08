@@ -1,54 +1,78 @@
 import express from 'express'
 import url from 'url'
-import storage from './storage'
+import path from 'path'
 
-const app = express()
-let server
+import project from './project'
+import utils from './utils'
+import { dataDirName } from './storage'
 
-function registerGet(parsedEndpoint) {
-  app.get(parsedEndpoint.pathname, (req, res) => {
-    const endpointDirName = parsedEndpoint.host + req.url
+const servers = []
 
-    storage.versions.current(endpointDirName, (err, version) => {
-      if (err) {
-        res.status(404).send('No versions found for ' + endpointDirName)
+function registerProjectItem(app, item, storagePath) {
+  if (!item.url) return
+  const parsedUrl = url.parse('http://' + utils.cleanUrl(item.url))
+
+  app[item.action](parsedUrl.pathname, (req, res) => {
+    if (!item.current) {
+      res.status(404).send('No versions found for ' + item.url)
+      return
+    }
+
+    res.sendFile(versionPath(storagePath, item))
+  })
+}
+
+export default function() {
+  project.getRoot((err, projectRoot) => {
+    if (err || !projectRoot) {
+      console.log('Project not initialized, probably')
+    }
+
+    project.itemize((err, items) => {
+      if (err || !items || !items.length) {
+        console.log('Add an endpoint first')
         return
       }
 
-      storage.versions.getData(endpointDirName, version, (getDataErr, data) => {
-        try {
-          res.json(JSON.parse(data))
-        } catch (error) {
-          res.status(415).send('Only JSON APIs are supported ATM')
-        }
+      const itemsByPort = projectItemsByPort(items)
+
+      Object.keys(itemsByPort).forEach(port => {
+        const app = express()
+
+        itemsByPort[port].forEach(item => {
+          registerProjectItem(app, item, path.join(projectRoot, dataDirName))
+        })
+
+        app.set('port', port)
+
+        servers.push(app.listen(port, function() {
+          console.log('Listening on port', port)
+        }))
       })
     })
   })
 }
 
-export default function(callback) {
-  if (typeof callback !== 'function') callback = function() {}
+function projectItemsByPort(items) {
+  items = items || []
 
-  storage.endpoints.all((err, endpoints) => {
-    if (err || !endpoints) {
-      console.log('add an endpoint first')
-      callback({message: 'no endpoints'})
-      return
-    }
+  return items.reduce((result, item) => {
+    if (!result[item.port]) result[item.port] = []
+    result[item.port].push(item)
 
-    endpoints.forEach(endpoint => {
-      registerGet(url.parse('http://' + endpoint))
-    })
+    return result
+  }, {})
+}
 
-    app.set('port', process.env.PORT || 5555)
+function versionPath(storagePath, item) {
+  const epName = utils.endpointNameFromPath(item.url)
+  const epPath = path.join(storagePath, item.port, item.action, epName)
 
-    server = app.listen(app.get('port'), function() {
-      console.log('Listening on port %d', server.address().port)
-      callback()
-    })
-  })
+  return path.join(epPath, item.current)
 }
 
 export function close() {
-  if (server) server.close()
+  servers.forEach(server => {
+    server.close()
+  })
 }
