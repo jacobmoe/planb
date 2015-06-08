@@ -27,7 +27,7 @@ export default function (storagePath) {
           cb()
         })
       } else {
-        cb({message: 'Endpoint not found'})
+        cb()
       }
     })
   }

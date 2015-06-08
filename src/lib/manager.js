@@ -76,7 +76,7 @@ export default {
 
     project.rollbackVersion(endpoint, options(opts), err => {
       if (err) {
-        console.log("Error rolling back", err)
+        console.log("Error rolling back.", err.message)
         return
       }
 
@@ -86,7 +86,7 @@ export default {
 
   remove: function(endpoint, opts) {
     if (!endpoint) {
-      console.log('missing endpoint. try the list command')
+      console.log('Missing endpoint. Try the list command')
       return
     }
 

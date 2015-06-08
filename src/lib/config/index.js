@@ -89,11 +89,17 @@ export default function (projectPath) {
   }
 
   function addEndpointToAction(endpoint, action, url) {
+    url = utils.cleanUrl(url)
+
     if (!endpoint[action]) {
       endpoint[action] = []
     }
 
-    if (endpoint[action].indexOf(url) < 0) {
+    const urls = endpoint[action].map(item => {
+      return utils.cleanUrl(item)
+    })
+
+    if (urls.indexOf(url) < 0) {
       endpoint[action].push(url)
     }
 
@@ -184,7 +190,7 @@ export default function (projectPath) {
 
     const urlIndex = urls.indexOf(utils.cleanUrl(url))
 
-    if (urlIndex < 0) return null
+    if (urlIndex < 0) return urls
 
     urls.splice(urlIndex, 1)
 

@@ -46,6 +46,7 @@ export default function(endpointPath) {
    */
   function all(callback) {
     fs.readdir(endpointPath, (err, versions) => {
+      if (err && err.code === 'ENOENT') { callback(null, []); return }
       if (err) { callback(err); return }
 
       const jobs = versions.reduce((collection, file) => {
@@ -100,6 +101,11 @@ export default function(endpointPath) {
    */
   function current(cb) {
     fs.readdir(endpointPath, (err, versions) => {
+      if (err && err.code === 'ENOENT') {
+        cb({message: 'Endpoint not found.'})
+        return
+      }
+
       if (err) { cb(err); return }
 
       const versionNums = versions.map(name => {

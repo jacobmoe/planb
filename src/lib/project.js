@@ -2,8 +2,8 @@ import path from 'path'
 import request from 'request'
 import async from 'async'
 
-import storageFactory, { dataDirName } from './storage'
-import configFactory from './config'
+import storageFactory from './storage'
+import configFactory, { configName } from './config'
 import utils from './utils'
 
 function init(cb) {
@@ -43,9 +43,9 @@ function getRoot(cb, dots) {
   dots = dots || '.'
 
   const currentPath = path.join(process.cwd(), dots)
-  const projectPath = currentPath + '/' + dataDirName
+  const configPath = path.join(currentPath, configName)
 
-  utils.fileExists(projectPath, (err, exists) => {
+  utils.fileExists(configPath, (err, exists) => {
     if (err) {
       cb({message: 'Error getting root', data: err})
     } else if (exists) {
@@ -67,6 +67,11 @@ function getRoot(cb, dots) {
 }
 
 function addEndpoint(url, opts, cb) {
+  if (!validOptions(opts)) {
+    cb({message: 'Invalid port or action'})
+    return
+  }
+
   buildConfigStorage((config, storage) => {
     config.addEndpoint(url, opts, (err, info) => {
       if (err) { cb(err); return }
@@ -222,6 +227,20 @@ function configTransformer(itemHook, endHook) {
       })
     }, callback)
   }
+}
+
+function validOptions(opts) {
+  opts = opts || {}
+
+  if (opts.action && !utils.validAction(opts.action)) {
+    return false
+  }
+
+  if (opts.port && !utils.validPort(opts.port)) {
+    return false
+  }
+
+  return true
 }
 
 export default {
