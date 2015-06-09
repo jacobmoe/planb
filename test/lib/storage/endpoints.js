@@ -3,6 +3,7 @@ import path from 'path'
 
 // variables in ES6 imports. how?
 const srcPath = '../../../' + SRC_DIR
+const utils = require(srcPath + '/lib/utils')
 const project = require(srcPath + '/lib/project')
 const storageFactory = require(srcPath + '/lib/storage')
 const endpointsFactory = require(srcPath + '/lib/storage/endpoints')
@@ -26,7 +27,7 @@ describe('storage/endpoints', () => {
 
         fs.readdir(path.join(storagePath, opts.port, opts.action), (err, files) => {
           assert.notOk(err)
-          assert.equal(files[0], 'www.someurl.com:api:v1:stuff')
+          assert.equal(files[0], utils.endpointNameFromPath(testUrl))
           done()
         })
       })
@@ -45,7 +46,7 @@ describe('storage/endpoints', () => {
 
         fs.readdir(path.join(storagePath, opts.port, opts.action), (err, files) => {
           assert.notOk(err)
-          assert.equal(files[0], 'www.someurl.com:api:v1:stuff')
+          assert.equal(files[0], utils.endpointNameFromPath(testUrl))
 
           endpoints.remove(testUrl, opts, err => {
             assert.notOk(err)

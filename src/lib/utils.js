@@ -19,11 +19,11 @@ function cleanUrl(url) {
 }
 
 function endpointNameFromPath(path) {
-  return cleanUrl(path).replace(/\//g, ':')
+  return encodeURIComponent(cleanUrl(path))
 }
 
 function pathFromEndpointName(name) {
-  return name.replace(/:/g, '/')
+  return decodeURIComponent(name)
 }
 
 function largest(arr) {
