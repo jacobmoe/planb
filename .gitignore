@@ -3,5 +3,7 @@ node_modules
 .tern-port
 npm-debug.log
 dist
+.planb.d
+.planb.json
 .planb.d.test
 .planb.json.test

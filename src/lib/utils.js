@@ -54,10 +54,7 @@ function writeJsonFile(path, data, cb) {
 
 function readJsonFile(path, cb) {
   fs.readFile(path, 'utf8', (err, json) => {
-    if (err) {
-      cb(err)
-      return
-    }
+    if (err) { cb(err); return }
 
     let data
 

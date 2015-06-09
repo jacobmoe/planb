@@ -41,7 +41,7 @@ export default {
   list: function() {
     project.itemize((err, items) => {
       if (err) {
-        console.log("Error getting list. Did you init a project?")
+        console.log("Error getting list.", err.message)
       } else {
         items.forEach(item => {
           if (!item) return
@@ -58,7 +58,8 @@ export default {
             }
           } else {
             item.versions.forEach(version => {
-              table.addRow(version.name, version.modifiedAt)
+              const name = version.name.replace(/\..*/, '')
+              table.addRow(name, version.modifiedAt)
             })
           }
 
@@ -127,7 +128,7 @@ function options(opts) {
   const parent = opts.parent || {}
 
   if (typeof parent.action === 'string') {
-    result.action = parent.action
+    result.action = parent.action.toLowerCase()
   }
 
   if (typeof parent.port === 'string') {

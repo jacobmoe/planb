@@ -295,11 +295,11 @@ describe('controller: project', () => {
             const endpointPath1 = path.join(projectPath, '5000', 'get', testName1)
             const endpointPath2 = path.join(projectPath, '5000', 'get', testName2)
 
-            utils.readJsonFile(path.join(endpointPath1, '0'), (err, data) => {
+            utils.readJsonFile(path.join(endpointPath1, '0.json'), (err, data) => {
               assert.notOk(err)
               assert.deepEqual(data, {content: "some content"})
 
-              utils.readJsonFile(path.join(endpointPath2, '0'), (err, data) => {
+              utils.readJsonFile(path.join(endpointPath2, '0.json'), (err, data) => {
                 assert.notOk(err)
                 assert.deepEqual(data, {content: "some more content"})
 
@@ -335,17 +335,88 @@ describe('controller: project', () => {
             const endpointPath1 = path.join(projectPath, '5000', 'get', testName1)
             const endpointPath2 = path.join(projectPath, '5000', 'get', testName2)
 
-            utils.readJsonFile(path.join(endpointPath1, '0'), (err, data) => {
+            utils.readJsonFile(path.join(endpointPath1, '0.json'), (err, data) => {
               assert.notOk(err)
               assert.deepEqual(data, {content: "some content"})
 
-              utils.readJsonFile(path.join(endpointPath2, '0'), (err, data) => {
+              utils.readJsonFile(path.join(endpointPath2, '0.json'), (err, data) => {
                 assert.notOk(err)
                 assert.deepEqual(data, {content: "some more content"})
 
                 done()
               })
             })
+          })
+        })
+      })
+    })
+
+    it('sets the file extension from the header content type', done => {
+      nock('http://www.test.com')
+      .defaultReplyHeaders({
+        'Content-Type': 'application/json'
+      })
+      .get('/api/path')
+      .reply(200, {content: 'some content'})
+      .defaultReplyHeaders({
+        'Content-Type': 'text/html'
+      })
+      .get('/api/path/2')
+      .reply(200, {content: 'some more content'})
+
+      project.addEndpoint(testUrl1, {}, err => {
+        assert.notOk(err)
+
+        project.addEndpoint(testUrl2, {}, err => {
+          assert.notOk(err)
+
+          project.fetchVersions(err => {
+            assert.notOk(err)
+
+            const testName1 = utils.endpointNameFromPath(testUrl1)
+            const testName2 = utils.endpointNameFromPath(testUrl2)
+            const projectPath = path.join(process.cwd(), storageFactory.dataDirName)
+            const endpointPath1 = path.join(projectPath, '5000', 'get', testName1)
+            const endpointPath2 = path.join(projectPath, '5000', 'get', testName2)
+
+            utils.readJsonFile(path.join(endpointPath1, '0.json'), (err, data) => {
+              assert.notOk(err)
+              assert.deepEqual(data, {content: "some content"})
+
+              utils.readJsonFile(path.join(endpointPath2, '0.html'), (err, data) => {
+                assert.notOk(err)
+                assert.deepEqual(data, {content: "some more content"})
+
+                done()
+              })
+            })
+          })
+        })
+      })
+    })
+
+    it('does not create file if extension is not supported', done => {
+      nock('http://www.test.com')
+      .defaultReplyHeaders({
+        'Content-Type': 'something/not-supported'
+      })
+      .get('/api/path')
+      .reply(200, {content: 'some content'})
+
+      project.addEndpoint(testUrl1, {}, err => {
+        assert.notOk(err)
+
+        project.fetchVersions(err => {
+          assert.notOk(err)
+
+          const testName1 = utils.endpointNameFromPath(testUrl1)
+          const projectPath = path.join(process.cwd(), storageFactory.dataDirName)
+          const endpointPath1 = path.join(projectPath, '5000', 'get', testName1)
+
+          fs.readdir(endpointPath1, (err, files) => {
+            assert.notOk(err)
+            assert.equal(files.length, 0)
+            done()
           })
         })
       })
@@ -395,15 +466,15 @@ describe('controller: project', () => {
         assert.equal(items[0].port, '5000')
         assert.equal(items[0].action, 'get')
         assert.equal(items[0].versions.length, 2)
-        assert.equal(items[0].versions[0].name, '0')
-        assert.equal(items[0].versions[1].name, '1')
+        assert.equal(items[0].versions[0].name, '0.json')
+        assert.equal(items[0].versions[1].name, '1.json')
 
         assert.equal(items[1].url, utils.cleanUrl(testUrl2))
         assert.equal(items[1].port, '5000')
         assert.equal(items[1].action, 'get')
         assert.equal(items[1].versions.length, 2)
-        assert.equal(items[1].versions[0].name, '0')
-        assert.equal(items[1].versions[1].name, '1')
+        assert.equal(items[1].versions[0].name, '0.json')
+        assert.equal(items[1].versions[1].name, '1.json')
 
         done()
       })
@@ -445,14 +516,14 @@ describe('controller: project', () => {
 
       fs.readdir(endpointPath, (err, files) => {
         assert.notOk(err)
-        assert.deepEqual(files, ['0', '1'])
+        assert.deepEqual(files, ['0.json', '1.json'])
 
         project.rollbackVersion(testUrl, {}, err => {
           assert.notOk(err)
 
           fs.readdir(endpointPath, (err, files) => {
             assert.notOk(err)
-            assert.deepEqual(files, ['0'])
+            assert.deepEqual(files, ['0.json'])
 
             project.rollbackVersion(testUrl, {}, err => {
               assert.notOk(err)

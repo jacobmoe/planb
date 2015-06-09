@@ -18,7 +18,11 @@ function registerProjectItem(app, item, storagePath) {
       return
     }
 
-    res.sendFile(versionPath(storagePath, item))
+    res.sendFile(versionPath(
+      storagePath,
+      path.join(parsedUrl.host, req.url),
+      item
+    ))
   })
 }
 
@@ -64,8 +68,8 @@ function projectItemsByPort(items) {
   }, {})
 }
 
-function versionPath(storagePath, item) {
-  const epName = utils.endpointNameFromPath(item.url)
+function versionPath(storagePath, url, item) {
+  const epName = utils.endpointNameFromPath(url)
   const epPath = path.join(storagePath, item.port, item.action, epName)
 
   return path.join(epPath, item.current)

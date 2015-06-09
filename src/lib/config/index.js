@@ -288,7 +288,10 @@ export default function (projectPath) {
     let result = []
 
     read((err, configData) => {
-      if (err) { cb(err); return }
+      if (err) {
+        cb({message: "JSON config is invalid."})
+        return
+      }
 
       const endpoints = configData.endpoints || []
 

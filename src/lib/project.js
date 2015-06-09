@@ -1,6 +1,7 @@
 import path from 'path'
 import request from 'request'
 import async from 'async'
+import mimeTypes from 'mime-types'
 
 import storageFactory from './storage'
 import configFactory, { configName } from './config'
@@ -114,8 +115,15 @@ function fetchVersions(callback, reqCallback, reqErrCallback) {
       if (!url.match(/^https?:\/\/.*/)) url = `http://${url}`
 
       request(url, (error, response, body) => {
-        const versions = storage.versions(item.url, opts)
         if (error) { cb({url: item.url, data: error}); return }
+
+        const versions = storage.versions(item.url, opts)
+        const ext = mimeTypes.extension(response.headers['content-type'])
+
+        if (!ext) {
+          cb({url: item.url, data: {message: 'Unsupported content type'}})
+          return
+        }
 
         if (response.statusCode != 200) {
           cb({url: item.url, status: response.statusCode})
@@ -124,7 +132,7 @@ function fetchVersions(callback, reqCallback, reqErrCallback) {
 
         if (reqCallback) reqCallback(item)
 
-        versions.create(body, cb)
+        versions.create(body, ext, cb)
       })
     })
   }, (err, res) => {
@@ -162,8 +170,7 @@ function itemize(callback) {
       item.versions = res
 
       versions.current((err, current) => {
-        if (err) { cb(err); return }
-        item.current = current
+        if (!err && current) item.current = current
 
         cb(null, item)
       })
