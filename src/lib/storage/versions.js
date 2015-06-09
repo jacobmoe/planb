@@ -133,7 +133,7 @@ export default function(endpointPath) {
 
       const filePath = path.join(endpointPath, versionName)
 
-      fs.readFile(filePath, 'utf8', (err, data) => {
+      utils.readJsonFile(filePath, (err, data) => {
         if (err) { cb(err); return }
 
         cb(null, data)

@@ -25,6 +25,7 @@
     "ascii-table": "0.0.8",
     "async": "^0.9.0",
     "commander": "^2.8.0",
+    "deep-diff": "^0.3.2",
     "express": "^4.12.3",
     "fs-extra": "^0.18.4",
     "mime-types": "^2.1.1",

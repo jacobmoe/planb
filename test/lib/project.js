@@ -541,4 +541,42 @@ describe('controller: project', () => {
     })
   })
 
+  describe('diffVersions', () => {
+    const testUrl = 'http://www.test.com/api/path'
+
+    beforeEach(project.init)
+
+    beforeEach(done => {
+      nock('http://www.test.com')
+      .get('/api/path')
+      .reply(200, {content: 'some content'})
+      .get('/api/path')
+      .reply(200, {content: 'some more content', other: 'other stuff'})
+
+      project.addEndpoint(testUrl, {}, err => {
+        assert.notOk(err)
+
+        project.fetchVersions(err => {
+          assert.notOk(err)
+
+          project.fetchVersions(err => {
+            assert.notOk(err)
+
+            done()
+          })
+        })
+      })
+    })
+
+
+    it('works', done => {
+      project.diffVersions(testUrl, {}, '0', '1', (err, diff) => {
+        assert.isNull(err)
+        console.log("-----------", diff)
+
+        done()
+      })
+    })
+  })
+
 })

@@ -2,6 +2,7 @@ import path from 'path'
 import request from 'request'
 import async from 'async'
 import mimeTypes from 'mime-types'
+import deepDiff from 'deep-diff'
 
 import storageFactory from './storage'
 import configFactory, { configName } from './config'
@@ -194,6 +195,25 @@ function rollbackVersion(url, opts, cb) {
   }, cb)
 }
 
+function diffVersions(url, opts, v1, v2, cb) {
+  buildConfigStorage((config, storage) => {
+    const versions = storage.versions(url, opts)
+
+    versions.getData(v1, (err, v1Data) => {
+      if (err) { cb(err); return }
+
+      versions.getData(v2, (err, v2Data) => {
+        if (err) { cb(err); return }
+
+        const result = deepDiff.diff(v1Data, v2Data)
+
+        cb(null, result)
+      })
+    })
+  }, cb)
+}
+
+
 /*
  * Convenience method to get rootPath and build config
  * and storage instances
@@ -264,5 +284,6 @@ export default {
   removeEndpoint: removeEndpoint,
   fetchVersions: fetchVersions,
   itemize: itemize,
-  rollbackVersion: rollbackVersion
+  rollbackVersion: rollbackVersion,
+  diffVersions: diffVersions
 }

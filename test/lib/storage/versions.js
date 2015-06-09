@@ -260,7 +260,7 @@ describe('storage/versions', () => {
   })
 
   describe('getData', () => {
-    const inputData = "some test data"
+    let inputData = {content: 'some content'}
     let versions
     let endpointPath
 
@@ -282,13 +282,16 @@ describe('storage/versions', () => {
     })
 
     beforeEach(done => {
-      fs.writeFile(path.join(endpointPath, '0.json'), inputData + '0', err => {
+      inputData.num = 0
+      utils.writeJsonFile(path.join(endpointPath, '0.json'), inputData, err => {
         assert.notOk(err)
 
-        fs.writeFile(path.join(endpointPath, '1.json'), inputData + '1', err => {
+        inputData.num = 1
+        utils.writeJsonFile(path.join(endpointPath, '1.json'), inputData, err => {
           assert.notOk(err)
 
-          fs.writeFile(path.join(endpointPath, '2.json'), inputData + '2', err => {
+          inputData.num = 2
+          utils.writeJsonFile(path.join(endpointPath, '2.json'), inputData, err => {
             assert.notOk(err)
             done()
           })
@@ -297,17 +300,21 @@ describe('storage/versions', () => {
     })
 
     it('accepts a version number and returns data', done => {
+      let expected = {content: inputData.content, num: 0}
+
       versions.getData(0, (err, data) => {
         assert.notOk(err)
-        assert.equal(data, inputData + '0')
+        assert.deepEqual(data, expected)
 
+        expected.num = 1
         versions.getData("1", (err, data) => {
           assert.notOk(err)
-          assert.equal(data, inputData + '1')
+          assert.deepEqual(data, expected)
 
+          expected.num = 2
           versions.getData("2", (err, data) => {
             assert.notOk(err)
-            assert.equal(data, inputData + '2')
+            assert.deepEqual(data, expected)
 
             done()
           })
