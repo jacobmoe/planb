@@ -15,57 +15,87 @@ var _url = require('url');
 
 var _url2 = _interopRequireDefault(_url);
 
+var _path = require('path');
+
+var _path2 = _interopRequireDefault(_path);
+
+var _project = require('./project');
+
+var _project2 = _interopRequireDefault(_project);
+
+var _utils = require('./utils');
+
+var _utils2 = _interopRequireDefault(_utils);
+
 var _storage = require('./storage');
 
-var _storage2 = _interopRequireDefault(_storage);
+var servers = [];
 
-var app = (0, _express2['default'])();
-var server = undefined;
+function registerProjectItem(app, item, storagePath) {
+  if (!item.url) return;
+  var parsedUrl = _url2['default'].parse('http://' + _utils2['default'].cleanUrl(item.url));
 
-function registerGet(parsedEndpoint) {
-  app.get(parsedEndpoint.pathname, function (req, res) {
-    var endpointDirName = parsedEndpoint.host + req.url;
-
-    _storage2['default'].versions.current(endpointDirName, function (err, version) {
-      if (err) {
-        res.status(404).send('No versions found for ' + endpointDirName);
-        return;
-      }
-
-      _storage2['default'].versions.getData(endpointDirName, version, function (getDataErr, data) {
-        try {
-          res.json(JSON.parse(data));
-        } catch (error) {
-          res.status(415).send('Only JSON APIs are supported ATM');
-        }
-      });
-    });
-  });
-}
-
-exports['default'] = function (callback) {
-  if (typeof callback !== 'function') callback = function () {};
-
-  _storage2['default'].endpoints.all(function (err, endpoints) {
-    if (err || !endpoints) {
-      console.log('add an endpoint first');
-      callback({ message: 'no endpoints' });
+  app[item.action](parsedUrl.pathname, function (req, res) {
+    if (!item.current) {
+      res.status(404).send('No versions found for ' + item.url);
       return;
     }
 
-    endpoints.forEach(function (endpoint) {
-      registerGet(_url2['default'].parse('http://' + endpoint));
-    });
+    res.sendFile(versionPath(storagePath, _path2['default'].join(parsedUrl.host, req.url), item));
+  });
+}
 
-    app.set('port', process.env.PORT || 5555);
+exports['default'] = function () {
+  _project2['default'].getRoot(function (err, projectRoot) {
+    if (err || !projectRoot) {
+      console.log('Project not initialized, probably');
+    }
 
-    server = app.listen(app.get('port'), function () {
-      console.log('Listening on port %d', server.address().port);
-      callback();
+    _project2['default'].itemize(function (err, items) {
+      if (err || !items || !items.length) {
+        console.log('Add an endpoint first');
+        return;
+      }
+
+      var itemsByPort = projectItemsByPort(items);
+
+      Object.keys(itemsByPort).forEach(function (port) {
+        var app = (0, _express2['default'])();
+
+        itemsByPort[port].forEach(function (item) {
+          registerProjectItem(app, item, _path2['default'].join(projectRoot, _storage.dataDirName));
+        });
+
+        app.set('port', port);
+
+        servers.push(app.listen(port, function () {
+          console.log('Listening on port', port);
+        }));
+      });
     });
   });
 };
 
+function projectItemsByPort(items) {
+  items = items || [];
+
+  return items.reduce(function (result, item) {
+    if (!result[item.port]) result[item.port] = [];
+    result[item.port].push(item);
+
+    return result;
+  }, {});
+}
+
+function versionPath(storagePath, url, item) {
+  var epName = _utils2['default'].endpointNameFromPath(url);
+  var epPath = _path2['default'].join(storagePath, item.port, item.action, epName);
+
+  return _path2['default'].join(epPath, item.current);
+}
+
 function close() {
-  if (server) server.close();
+  servers.forEach(function (server) {
+    server.close();
+  });
 }

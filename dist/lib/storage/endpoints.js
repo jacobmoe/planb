@@ -3,92 +3,73 @@
 Object.defineProperty(exports, '__esModule', {
   value: true
 });
-exports.create = create;
-exports.all = all;
-exports.remove = remove;
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-var _fs = require('fs');
+var _fsExtra = require('fs-extra');
 
-var _fs2 = _interopRequireDefault(_fs);
+var _fsExtra2 = _interopRequireDefault(_fsExtra);
 
-var _async = require('async');
+var _path = require('path');
 
-var _async2 = _interopRequireDefault(_async);
+var _path2 = _interopRequireDefault(_path);
 
-var _utils = require('./utils');
+var _utilsJs = require('../utils.js');
 
-var _utils2 = _interopRequireDefault(_utils);
+var _utilsJs2 = _interopRequireDefault(_utilsJs);
 
-function create(path, cb) {
-  var name = _utils2['default'].endpointNameFromPath(path);
+var _defaults = require('../defaults');
 
-  _utils2['default'].checkDataDir(function (err) {
-    if (err) {
-      cb(err);return;
-    }
+var defaults = _interopRequireWildcard(_defaults);
 
-    _utils2['default'].createDir(_utils2['default'].dataPath + name, function (createDirErr) {
-      if (createDirErr) {
-        cb(createDirErr);return;
+exports['default'] = function (storagePath) {
+
+  function checkEndpoint(url, opts, cb) {
+    _utilsJs2['default'].fileExists(getEndpointPath(url, opts), cb);
+  }
+
+  function create(url, opts, cb) {
+    _utilsJs2['default'].createDirs(getEndpointPath(url, opts), cb);
+  }
+
+  function remove(endpoint, opts, cb) {
+    var endpointPath = getEndpointPath(endpoint, opts);
+
+    _utilsJs2['default'].fileExists(endpointPath, function (err, exists) {
+      if (err) {
+        cb(err);return;
       }
 
-      cb();
-    });
-  });
-}
-
-function all(cb) {
-  _fs2['default'].readdir(_utils2['default'].dataPath, function (err, files) {
-    if (err) {
-      cb(err);return;
-    }
-
-    cb(null, files.map(function (file) {
-      return _utils2['default'].pathFromEndpointName(file);
-    }));
-  });
-}
-
-function remove(endpoint, callback) {
-  var name = _utils2['default'].endpointNameFromPath(endpoint);
-
-  var endpointPath = _utils2['default'].dataPath + name;
-
-  _fs2['default'].readdir(endpointPath, function (err, files) {
-    if (err) {
-      callback(err);return;
-    }
-
-    var jobs = files.reduce(function (collection, file) {
-      collection.push(function (cb) {
-
-        var versionPath = endpointPath + '/' + file;
-        _fs2['default'].unlink(versionPath, function (unlinkErr) {
-          if (unlinkErr) {
-            cb(unlinkErr);return;
+      if (exists) {
+        _fsExtra2['default'].remove(endpointPath, function (err) {
+          if (err) {
+            cb(err);return;
           }
 
           cb();
         });
-      });
-
-      return collection;
-    }, []);
-
-    _async2['default'].parallel(jobs, function (unlinkAllErr) {
-      if (unlinkAllErr) {
-        callback(unlinkAllErr);return;
+      } else {
+        cb();
       }
-
-      _fs2['default'].rmdir(endpointPath, function (rmErr) {
-        if (rmErr) {
-          callback(rmErr);return;
-        }
-
-        callback();
-      });
     });
-  });
-}
+  }
+
+  function getEndpointPath(endpoint, opts) {
+    opts = opts || {};
+    var port = opts.port || defaults.port;
+    var action = opts.action || defaults.action;
+    var name = _utilsJs2['default'].endpointNameFromPath(endpoint);
+
+    return _path2['default'].join(storagePath, port, action, name);
+  }
+
+  return {
+    create: create,
+    remove: remove,
+    checkEndpoint: checkEndpoint
+  };
+};
+
+module.exports = exports['default'];

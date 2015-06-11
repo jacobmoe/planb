@@ -41,7 +41,8 @@ program
 
 program
   .command('diff [endpoint] [v1] [v2]')
-  .description("Diff versions")
+  .description("Diff versions. With no version numbers, \n" +
+               "diffs the current version with the previous")
   .action(manager.diff)
 
 program
