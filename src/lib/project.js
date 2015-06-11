@@ -2,7 +2,7 @@ import path from 'path'
 import request from 'request'
 import async from 'async'
 import mimeTypes from 'mime-types'
-import deepDiff from 'deep-diff'
+import jsonDiff from 'json-diff'
 
 import storageFactory from './storage'
 import configFactory, { configName } from './config'
@@ -195,22 +195,76 @@ function rollbackVersion(url, opts, cb) {
   }, cb)
 }
 
-function diffVersions(url, opts, v1, v2, cb) {
+function diff(url, v1, v2, opts, cb) {
+  const v1Num = parseInt(v1)
+  const v2Num = parseInt(v2)
+
+  if ((v1Num === 0 || v1Num) && (v2Num === 0 || v2Num)) {
+    diffVersions(url, v1Num, v2Num, opts, cb)
+  } else {
+    diffCurrentVersion(url, v1Num || v2Num, opts, cb)
+  }
+}
+
+function diffCurrentVersion(url, versionNum, opts, cb) {
   buildConfigStorage((config, storage) => {
     const versions = storage.versions(url, opts)
 
-    versions.getData(v1, (err, v1Data) => {
+    versions.current((err, current) => {
       if (err) { cb(err); return }
 
-      versions.getData(v2, (err, v2Data) => {
-        if (err) { cb(err); return }
+      const currentNum = versions.numFromFileName(current)
 
-        const result = deepDiff.diff(v1Data, v2Data)
+      if (currentNum == 0) {
+        cb({message: 'Only one version for this endpoint'})
+        return
+      }
 
-        cb(null, result)
-      })
+      if (!currentNum) {
+        cb({message: 'Current version not found'})
+        return
+      }
+
+      if (versionNum === 0 || versionNum) {
+        if (versionNum < currentNum && versionNum >= 0) {
+          getVersionDiffs(versions, currentNum, versionNum, cb)
+        } else {
+          cb({message: 'Invalid version number'})
+          return
+        }
+      } else {
+        getVersionDiffs(versions, currentNum, currentNum - 1, cb)
+      }
     })
   }, cb)
+}
+
+function diffVersions(url, v1, v2, opts, cb) {
+  buildConfigStorage((config, storage) => {
+    const versions = storage.versions(url, opts)
+
+    getVersionDiffs(versions, v1, v2, cb)
+  }, cb)
+}
+
+function getVersionDiffs(versions, v1, v2, cb) {
+  versions.getData(v1.toString(), (err, v1Data) => {
+    if (err) { cb(err); return }
+
+    versions.getData(v2, (err, v2Data) => {
+      if (err) { cb(err); return }
+
+      let diff = jsonDiff.diffString(v1Data, v2Data)
+
+      // for some reason, when json-diff doesn't find a diff,
+      // it returns a string that looks like "undefined  "
+      if (!diff || (typeof diff === 'string' && diff.trim() === 'undefined')) {
+        diff = null
+      }
+
+      cb(null, diff)
+    })
+  })
 }
 
 
@@ -285,5 +339,5 @@ export default {
   fetchVersions: fetchVersions,
   itemize: itemize,
   rollbackVersion: rollbackVersion,
-  diffVersions: diffVersions
+  diff: diff
 }

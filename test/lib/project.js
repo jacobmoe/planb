@@ -541,40 +541,160 @@ describe('controller: project', () => {
     })
   })
 
-  describe('diffVersions', () => {
+  describe('diff', () => {
     const testUrl = 'http://www.test.com/api/path'
+
+    const obj1 = {
+      content: 'some content'
+    }
+
+    const obj2 = {
+      content: 'some more content',
+      with: 'a different property'
+    }
+
+    const obj3 = {
+      content: 'some more content',
+      with: 'some changed content'
+    }
 
     beforeEach(project.init)
 
-    beforeEach(done => {
-      nock('http://www.test.com')
-      .get('/api/path')
-      .reply(200, {content: 'some content'})
-      .get('/api/path')
-      .reply(200, {content: 'some more content', other: 'other stuff'})
+    context('multiple versions', () => {
+      beforeEach(done => {
+        nock('http://www.test.com')
+        .get('/api/path')
+        .reply(200, obj1)
+        .get('/api/path')
+        .reply(200, obj2)
+        .get('/api/path')
+        .reply(200, obj3)
 
-      project.addEndpoint(testUrl, {}, err => {
-        assert.notOk(err)
-
-        project.fetchVersions(err => {
+        project.addEndpoint(testUrl, {}, err => {
           assert.notOk(err)
 
           project.fetchVersions(err => {
             assert.notOk(err)
 
+            project.fetchVersions(err => {
+              assert.notOk(err)
+
+              project.fetchVersions(err => {
+                assert.notOk(err)
+
+                done()
+              })
+            })
+          })
+        })
+      })
+
+      it('accepts two version numbers and returns the diff', done => {
+        project.diff(testUrl, '2', '1', {}, (err, diff) => {
+          assert.isNull(err)
+
+          const expected = [
+            ' {\n\u001b[31m-  with: "some changed content"',
+            '\u001b[39m\n\u001b[32m+  with: "a different property',
+            '"\u001b[39m\n }\n'
+          ].join('')
+
+          assert.equal(diff, expected)
+
+          project.diff(testUrl, '1', '0', {}, (err, diff) => {
+            assert.isNull(err)
+
+            const expected = [
+              ' {\n\u001b[31m-  with: "a different property"',
+              '\u001b[39m\n\u001b[31m-  content: "some more content"',
+              '\u001b[39m\n\u001b[32m+  content: "some content"',
+              '\u001b[39m\n }\n'
+            ].join('')
+
+            assert.equal(diff, expected)
+
             done()
           })
         })
       })
+
+      it('uses the current version if a single version number is provided', done => {
+        project.diff(testUrl, null, '1', {}, (err, diff) => {
+          assert.isNull(err)
+
+          const expected = [
+            ' {\n\u001b[31m-  with: "some changed content"',
+            '\u001b[39m\n\u001b[32m+  with: "a different property',
+            '"\u001b[39m\n }\n'
+          ].join('')
+
+          assert.equal(diff, expected)
+
+          project.diff(testUrl, null, '0', {}, (err, diff) => {
+            assert.isNull(err)
+
+            const expected = [
+              ' {\n\u001b[31m-  with: "some changed content"',
+              '\u001b[39m\n\u001b[31m-  content: "some more content"',
+              '\u001b[39m\n\u001b[32m+  content: "some content"',
+              '\u001b[39m\n }\n'
+            ].join('')
+
+            assert.equal(diff, expected)
+
+            done()
+          })
+        })
+      })
+
+      it('uses current version and previous if no versions provided', done => {
+        project.diff(testUrl, null, null, {}, (err, diff) => {
+          assert.isNull(err)
+
+          const expected = [
+            ' {\n\u001b[31m-  with: "some changed content"',
+            '\u001b[39m\n\u001b[32m+  with: "a different property"',
+            '\u001b[39m\n }\n'
+          ].join('')
+
+          assert.equal(diff, expected)
+
+          done()
+        })
+      })
+
+      it('returns an error if version is larger than current', done => {
+        project.diff(testUrl, null, '5', {}, (err, diff) => {
+          assert.isObject(err)
+
+          done()
+        })
+      })
+
     })
 
+    context('one version', () => {
+      beforeEach(done => {
+        nock('http://www.test.com')
+        .get('/api/path')
+        .reply(200, obj1)
 
-    it('works', done => {
-      project.diffVersions(testUrl, {}, '0', '1', (err, diff) => {
-        assert.isNull(err)
-        console.log("-----------", diff)
+        project.addEndpoint(testUrl, {}, err => {
+          assert.notOk(err)
 
-        done()
+          project.fetchVersions(err => {
+            assert.notOk(err)
+            done()
+          })
+        })
+      })
+
+      it('it returns an error', done => {
+        project.diff(testUrl, null, null, {}, (err, diff) => {
+          assert.isObject(err)
+
+          done()
+        })
       })
     })
   })

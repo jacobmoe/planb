@@ -118,8 +118,28 @@ export default {
         })
       }
     })
+  },
+
+  diff: function(endpoint, v1, v2, opts) {
+    if (!endpoint) {
+      console.log('Missing endpoint. Try the list command')
+      return
+    }
+
+    project.diff(endpoint, v1, v2, options(opts), (err, diff) => {
+      if (err) {
+        console.log('Problem getting diff.', err.message)
+      } else {
+        if (diff) {
+          console.log(diff)
+        } else {
+          console.log('No diff')
+        }
+      }
+    })
   }
 }
+
 
 function options(opts) {
   opts = opts || {}

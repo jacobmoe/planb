@@ -40,6 +40,11 @@ program
   .action(manager.remove)
 
 program
+  .command('diff [endpoint] [v1] [v2]')
+  .description("Diff versions")
+  .action(manager.diff)
+
+program
   .command('serve')
   .description('Serve local versions')
   .action(server)

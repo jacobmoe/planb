@@ -156,7 +156,8 @@ export default function(endpointPath) {
     all: all,
     current: current,
     getData: getData,
-    remove: remove
+    remove: remove,
+    numFromFileName: numFromFileName
   }
 
 }

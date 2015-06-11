@@ -46,4 +46,50 @@ describe('utils', () => {
       assert.equal(utils.findKeyBy(obj, {same: "same"}), 100)
     })
   })
+
+  describe('getProp', function() {
+    it('returns a deeply nested property', function() {
+      var obj = {a: {deeply: {nested: 'property'}}}
+      var result = utils.getProp(obj, 'a.deeply.nested')
+
+      assert.equal(result, 'property')
+    })
+
+    it('returns null if property is not available', function() {
+      var obj = {a: {deeply: {nested: 'property'}}}
+      var result = utils.getProp(obj, 'a.wrong.param')
+
+      assert.isNull(result)
+    })
+
+    it('accepts array indexes', function() {
+      var obj = {a: {lot: {
+        of: [
+          {deeply: {nested: 'properties'}},
+          {also: 'works'}
+        ]
+      }}}
+
+      var result = utils.getProp(obj, 'a.lot.of.0.deeply.nested')
+      assert.equal(result, 'properties')
+
+      result = utils.getProp(obj, 'a.lot.of.1.also')
+      assert.equal(result, 'works')
+    })
+
+    it('accepts an array as well as a string path', function() {
+      var obj = {a: {lot: {
+        of: [
+          {deeply: {nested: 'properties'}},
+          {also: 'works'}
+        ]
+      }}}
+
+      var result = utils.getProp(obj, ['a', 'lot', 'of', '0', 'deeply', 'nested'])
+      assert.equal(result, 'properties')
+
+      result = utils.getProp(obj, ['a', 'lot', 'of', 1, 'also'])
+      assert.equal(result, 'works')
+    })
+  })
 })

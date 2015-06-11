@@ -179,6 +179,24 @@ function validPort(port) {
   return isNumber && validPortRange
 }
 
+function getProp(obj, propPath) {
+  if (typeof propPath === 'string') {
+    propPath = propPath.split('.')
+  }
+  var result = obj
+
+  try {
+    propPath.forEach(function(name) {
+      result = result[name]
+    })
+
+    return result
+  } catch (e) {
+
+    return null
+  }
+}
+
 export default {
   createDirs: createDirs,
   endpointNameFromPath: endpointNameFromPath,
@@ -193,5 +211,6 @@ export default {
   findBy: findBy,
   getProjectFileName: getProjectFileName,
   validAction: validAction,
-  validPort: validPort
+  validPort: validPort,
+  getProp: getProp
 }
