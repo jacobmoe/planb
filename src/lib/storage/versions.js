@@ -1,85 +1,163 @@
 import fs from 'fs'
 import async from 'async'
+import path from 'path'
 
-import utils from './utils'
+import utils from '../utils'
 
-export function create(endpointUrl, data, cb) {
-  const name = utils.endpointNameFromPath(endpointUrl)
-  let fileNum
+export default function(endpointPath) {
 
-  fs.readdir(utils.dataPath + name, (err, files) => {
-    if (err) { cb(err); return }
-
-    if (!files.length) {
-      fileNum = 0
-    } else {
-      fileNum = utils.largest(files) + 1
+  /*
+   * create(data, ext, cb) / create(data, cb)
+   *
+   * Write data to a version file.
+   *
+   * Version names are a sequence of integers with an optional
+   * file extension. Finds the current version number, increments by one
+   * to get the name of the next version.
+   */
+  function create(data, ext, cb) {
+    if (arguments.length < 3) {
+      cb = arguments[1]
+      ext = null
     }
 
-    const fileName = utils.dataPath + name + '/' + fileNum
+    current((err, currentVersion) => {
+      if (err) { cb(err); return }
 
-    fs.writeFile(fileName, data, writeErr => {
-      if (writeErr) { cb(writeErr); return }
+      const currentNum = numFromFileName(currentVersion)
+      const firstVersion = currentNum !== 0 && !currentNum
+
+      const fileNum = firstVersion ? 0 : currentNum + 1
+      const fileName = ext ? fileNum + '.' + ext : fileNum.toString()
+      const filePath = path.join(endpointPath, fileName)
+
+      fs.writeFile(filePath, data, err => {
+        if (err) { cb(err); return }
+
+        cb()
+      })
+    })
+  }
+
+  /*
+   * Returns a data object for each version
+   *
+   * Return object: name, modifiedAt
+   */
+  function all(callback) {
+    fs.readdir(endpointPath, (err, versions) => {
+      if (err && err.code === 'ENOENT') { callback(null, []); return }
+      if (err) { callback(err); return }
+
+      const jobs = versions.reduce((collection, file) => {
+        collection.push(cb => {
+          const versionPath = path.join(endpointPath, file)
+
+          fs.stat(versionPath, (statErr, stats) => {
+            if (statErr) { cb(statErr); return }
+
+            cb(null, {name: file, modifiedAt: stats.mtime})
+          })
+        })
+
+        return collection
+      }, [])
+
+      async.parallel(jobs, (allErr, res) => {
+        callback(allErr, res)
+      })
+    })
+  }
+
+  function numFromFileName(name) {
+    if (typeof name !== 'string') return null
+
+    const num = name.replace(/\..*/, '')
+    return isNaN(num) ? null : parseInt(num)
+  }
+
+  function fileNameFromNum(num, cb) {
+    if (typeof num === 'string') num = parseInt(num)
+
+    fs.readdir(endpointPath, (err, versions) => {
+      if (err) { cb(err); return }
+
+      const versionNums = versions.map(version => {
+        return numFromFileName(version)
+      })
+
+      const versionIndex = versionNums.indexOf(num)
+
+      if (versionIndex === -1) {
+        cb()
+      } else {
+        cb(null, versions[versionIndex])
+      }
+    })
+  }
+
+  /*
+   * Returns name of most recently added version
+   */
+  function current(cb) {
+    fs.readdir(endpointPath, (err, versions) => {
+      if (err && err.code === 'ENOENT') {
+        cb({message: 'Endpoint not found.'})
+        return
+      }
+
+      if (err) { cb(err); return }
+
+      const versionNums = versions.map(name => {
+        return numFromFileName(name)
+      })
+
+      const largest = utils.largest(versionNums)
+      const largestIndex = versionNums.indexOf(largest)
+
+      if (largestIndex > -1) {
+        cb(null, versions[largestIndex])
+      } else {
+        cb()
+      }
+    })
+  }
+
+  /*
+   * Accepts a version number and returns file contents
+   */
+  function getData(versionNum, cb) {
+    fileNameFromNum(versionNum, (err, versionName) => {
+      if (err) { cb(err); return }
+      if (!versionName) { cb({message: 'Version not found'}); return }
+
+      const filePath = path.join(endpointPath, versionName)
+
+      utils.readJsonFile(filePath, (err, data) => {
+        if (err) { cb(err); return }
+
+        cb(null, data)
+      })
+    })
+  }
+
+  function remove(versionFileName, cb) {
+    const versionPath = path.join(endpointPath, versionFileName)
+
+    fs.unlink(versionPath, err => {
+      if (err) { cb(err); return }
 
       cb()
     })
-  })
-}
+  }
 
-export function all(endpointUrl, callback) {
-  const name = utils.endpointNameFromPath(endpointUrl)
+  return {
+    create: create,
+    all: all,
+    current: current,
+    getData: getData,
+    remove: remove,
+    numFromFileName: numFromFileName
+  }
 
-  fs.readdir(utils.dataPath + name, (err, versions) => {
-    if (err) { callback(err); return }
-
-    const jobs = versions.reduce((collection, file) => {
-      collection.push(cb => {
-        const versionPath = utils.dataPath + name + '/' + file
-        fs.stat(versionPath, (statErr, stats) => {
-          if (statErr) { cb(statErr); return }
-
-          cb(null, {name: file, modifiedAt: stats.mtime})
-        })
-      })
-
-      return collection
-    }, [])
-
-    async.parallel(jobs, (allErr, res) => {
-      callback(allErr, res)
-    })
-  })
-}
-
-export function current(endpointUrl, cb) {
-  const name = utils.endpointNameFromPath(endpointUrl)
-
-  fs.readdir(utils.dataPath + name, (err, versions) => {
-    if (err) { cb(err); return }
-
-    cb(null, utils.largest(versions))
-  })
-}
-
-export function getData(endpointUrl, version, cb) {
-  const name = utils.endpointNameFromPath(endpointUrl)
-
-  const filePath = utils.dataPath + name + '/' + version
-
-  fs.readFile(filePath, 'utf8', (err, data) => {
-    if (err) { cb(err); return }
-
-    cb(null, data)
-  })
-}
-
-export function remove(endpointUrl, version, cb) {
-  const name = utils.endpointNameFromPath(endpointUrl)
-
-  const versionPath = utils.dataPath + name + '/' + version
-  fs.unlink(versionPath, err => {
-    if (err) { cb(err); return }
-
-    cb()
-  })
 }

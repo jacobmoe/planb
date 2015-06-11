@@ -3,6 +3,16 @@
 import program from 'commander'
 import manager from './lib/manager'
 import server from './lib/server'
+import * as defaults from './lib/defaults'
+
+program
+  .option('-p, --port <port>', 'Set port. Default: ' + defaults.port)
+  .option('-a, --action <action>', 'Set action. Default: ' + defaults.action)
+
+program
+  .command('init')
+  .description('Initialize a project in current directory')
+  .action(manager.init)
 
 program
   .command('add [url]')
@@ -28,6 +38,12 @@ program
   .command('remove [endpoint]')
   .description("Remove the endpoint and all its versions")
   .action(manager.remove)
+
+program
+  .command('diff [endpoint] [v1] [v2]')
+  .description("Diff versions. With no version numbers, \n" +
+               "diffs the current version with the previous")
+  .action(manager.diff)
 
 program
   .command('serve')

@@ -1,140 +1,93 @@
 import AsciiTable from 'ascii-table'
-import async from 'async'
-import request from 'request'
 import prompt from 'prompt'
 
-import storage from './storage'
+import project from './project'
 
 export default {
-  add: (url, opts, cb) => {
-    if (typeof cb !== 'function') cb = function() {}
-    if (typeof url !== 'string') return
-
-    storage.endpoints.create(url, err => {
+  init: function() {
+    project.init(err => {
       if (err) {
-        console.log("error adding endpoint", err)
-        cb(err)
-        return
+        console.log("Error initializing project.", err.message)
+      } else {
+        console.log("Project initialized")
       }
-
-      console.log('endpoint added')
-      cb()
     })
   },
 
-  fetch: (opts, callback) => {
-    if (typeof callback !== 'function') callback = function() {}
+  add: function(url, opts) {
+    if (!url || !url.length) return
 
-    storage.endpoints.all((err, endpoints) => {
-      if (err || !endpoints) {
-        console.log("add an endpoint first")
-        callback()
-        return
+    project.addEndpoint(url, options(opts), err => {
+      if (err) {
+        console.log("Error adding endpoint.", err.message)
+      } else {
+        console.log('Endpoint added')
       }
-
-      const jobs = endpoints.reduce((collection, endpoint) => {
-        collection.push(cb => {
-          const url = `http://${endpoint}`
-          request(url, (error, response, body) => {
-            if (error) {
-              cb({endpoint: endpoint, error: error})
-              return
-            }
-
-            if (response.statusCode != 200) {
-              cb({endpoint: endpoint, status: response.statusCode})
-              return
-            }
-
-            console.log('updating ' + endpoint)
-            storage.versions.create(endpoint, body, cb)
-          })
-        })
-
-        return collection
-      }, [])
-
-      async.parallel(jobs, (err, res) => {
-        if (err) {
-          console.log("could not fetch data from " + err.endpoint)
-        }
-
-        callback()
-      })
-
     })
   },
 
-  list: (opts, cb) => {
-    if (typeof cb !== 'function') cb = function() {}
-
-    storage.endpoints.all((err, endpoints) => {
-      if (err || !endpoints) {
-        console.log("add an endpoint first")
-        cb()
-        return
+  fetch: function() {
+    project.fetchVersions(err => {
+      if (err) {
+        console.log("Error fetching new versions.", err.message)
       }
+    }, item => {
+      console.log("Updating", item.url, "for port", item.port)
+    }, url => {
+      console.log("Could not update", url)
+    })
+  },
 
-      endpoints.forEach(endpoint => {
-        const table = new AsciiTable()
+  list: function() {
+    project.itemize((err, items) => {
+      if (err) {
+        console.log("Error getting list.", err.message)
+      } else {
+        items.forEach(item => {
+          if (!item) return
 
-        table.setHeading(null, endpoint)
+          const table = new AsciiTable()
+          table.setHeading(null, item.port + ' | ' + item.action + ' | ' + item.url)
 
-        storage.versions.all(endpoint, (versionsErr, versions) => {
-          if (!versions.length) {
-            table.addRow('-', 'no versions yet. use "fetch" to add one')
+          if (!item.versions.length) {
+            if (item.action === 'get') {
+              table.addRow('-', 'No versions yet. Use "fetch" to add one')
+            } else {
+              const message = 'not supported by fetch. Add a version manually.'
+              table.addRow('-', item.action.toUpperCase() + ' ' + message)
+            }
           } else {
-            versions.forEach(version => {
-              table.addRow(version.name, version.modifiedAt)
+            item.versions.forEach(version => {
+              const name = version.name.replace(/\..*/, '')
+              table.addRow(name, version.modifiedAt)
             })
           }
 
           console.log(table.toString())
-          cb()
         })
-      })
+      }
     })
   },
 
-  rollback: (endpoint, opts, cb) => {
-    if (typeof cb !== 'function') cb = function() {}
-
-    if (!endpoint) {
-      console.log('missing endpoint. try the list command')
-      cb({message: 'missing endpoint'})
+  rollback: function(endpoint, opts) {
+    if (!endpoint || !endpoint.length) {
+      console.log('Missing endpoint. Try the list command')
       return
     }
 
-    storage.versions.current(endpoint, (err, num) => {
-      if (err || !num) {
-        console.log("no versions for that endpoint")
-        cb(err)
+    project.rollbackVersion(endpoint, options(opts), err => {
+      if (err) {
+        console.log("Error rolling back.", err.message)
         return
       }
 
-      storage.versions.remove(endpoint, num, removeError => {
-        if (removeError) {
-          console.log('error rolling back', removeError)
-          cb(removeError)
-          return
-        }
-
-        cb()
-      })
+      console.log("Rolled back endpoint")
     })
   },
 
-  remove: (endpoint, opts, cb) => {
-    if (typeof cb !== 'function') cb = function() {}
-
-    if (typeof arguments[0] === 'function') {
-      cb = arguments[0]
-      endpoint = null
-    }
-
+  remove: function(endpoint, opts) {
     if (!endpoint) {
-      console.log('missing endpoint. try the list command')
-      cb({message: 'missing endpoint'})
+      console.log('Missing endpoint. Try the list command')
       return
     }
 
@@ -150,25 +103,57 @@ export default {
 
     prompt.get(schema, (err, result) => {
       if (err) {
-        console.log('invalid response')
-        cb({message: 'invalid response'})
+        console.log('Invalid response')
         return
       }
 
       if (result.confirm === 'yes' || result.confirm === 'y') {
-        storage.endpoints.remove(endpoint, removeError => {
-          if (removeError) {
-            const message = 'endpoint not found'
-            console.log(message)
-            cb({message: message})
+        project.removeEndpoint(endpoint, options(opts), err => {
+          if (err) {
+            console.log('Endpoint not found')
             return
           }
 
-          console.log('endpoint removed')
-          cb()
+          console.log('Endpoint removed')
         })
       }
     })
+  },
+
+  diff: function(endpoint, v1, v2, opts) {
+    if (!endpoint) {
+      console.log('Missing endpoint. Try the list command')
+      return
+    }
+
+    project.diff(endpoint, v1, v2, options(opts), (err, diff) => {
+      if (err) {
+        console.log('Problem getting diff.', err.message)
+      } else {
+        if (diff) {
+          console.log(diff)
+        } else {
+          console.log('No diff')
+        }
+      }
+    })
+  }
+}
+
+
+function options(opts) {
+  opts = opts || {}
+
+  let result = {}
+  const parent = opts.parent || {}
+
+  if (typeof parent.action === 'string') {
+    result.action = parent.action.toLowerCase()
   }
 
+  if (typeof parent.port === 'string') {
+    result.port = parent.port
+  }
+
+  return result
 }

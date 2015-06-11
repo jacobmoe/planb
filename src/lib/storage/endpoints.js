@@ -1,62 +1,50 @@
-import fs from 'fs'
-import async from 'async'
+import fs from 'fs-extra'
+import path from 'path'
 
-import utils from './utils'
+import utils from '../utils.js'
+import * as defaults from '../defaults'
 
-export function create(path, cb) {
-  const name = utils.endpointNameFromPath(path)
+export default function (storagePath) {
 
-  utils.checkDataDir(err => {
-    if (err) { cb(err); return }
+  function checkEndpoint(url, opts, cb) {
+    utils.fileExists(getEndpointPath(url, opts), cb)
+  }
 
-    utils.createDir(utils.dataPath + name, createDirErr => {
-      if (createDirErr) { cb(createDirErr); return }
+  function create(url, opts, cb) {
+    utils.createDirs(getEndpointPath(url, opts), cb)
+  }
 
-     cb()
-    })
-  })
-}
+  function remove(endpoint, opts, cb) {
+    const endpointPath = getEndpointPath(endpoint, opts)
 
-export function all(cb) {
-  fs.readdir(utils.dataPath, (err, files) => {
-    if (err) { cb(err); return }
+    utils.fileExists(endpointPath, (err, exists) => {
+      if (err) { cb(err); return }
 
-    cb(null, files.map(file => {
-      return utils.pathFromEndpointName(file)
-    }))
-  })
-}
-
-export function remove(endpoint, callback) {
-  const name = utils.endpointNameFromPath(endpoint)
-
-  const endpointPath = utils.dataPath + name
-
-  fs.readdir(endpointPath, (err, files) => {
-    if (err) { callback(err); return }
-
-    const jobs = files.reduce((collection, file) => {
-      collection.push(function(cb) {
-
-        const versionPath = endpointPath + '/' + file
-        fs.unlink(versionPath, unlinkErr => {
-          if (unlinkErr) { cb(unlinkErr); return }
+      if (exists) {
+        fs.remove(endpointPath, err => {
+          if (err) { cb(err); return }
 
           cb()
         })
-      })
-
-      return collection
-    }, [])
-
-    async.parallel(jobs, unlinkAllErr => {
-      if (unlinkAllErr) { callback(unlinkAllErr); return }
-
-      fs.rmdir(endpointPath, rmErr => {
-        if (rmErr) { callback(rmErr); return }
-
-        callback()
-      })
+      } else {
+        cb()
+      }
     })
-  })
+  }
+
+  function getEndpointPath(endpoint, opts) {
+    opts = opts || {}
+    const port = opts.port || defaults.port
+    const action = opts.action || defaults.action
+    const name = utils.endpointNameFromPath(endpoint)
+
+    return path.join(storagePath, port, action, name)
+  }
+
+  return {
+    create: create,
+    remove: remove,
+    checkEndpoint: checkEndpoint
+  }
+
 }
