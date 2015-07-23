@@ -1,4 +1,5 @@
 import fs from 'fs-extra'
+import crypto from 'crypto'
 
 import packageJson from '../../package'
 import * as defaults from './defaults'
@@ -19,11 +20,7 @@ function cleanUrl(url) {
 }
 
 function endpointNameFromPath(path) {
-  return encodeURIComponent(cleanUrl(path))
-}
-
-function pathFromEndpointName(name) {
-  return decodeURIComponent(name)
+  return crypto.createHash('sha256').update(cleanUrl(path)).digest('hex')
 }
 
 function largest(arr) {
@@ -200,7 +197,6 @@ function getProp(obj, propPath) {
 export default {
   createDirs: createDirs,
   endpointNameFromPath: endpointNameFromPath,
-  pathFromEndpointName: pathFromEndpointName,
   cleanUrl: cleanUrl,
   largest: largest,
   fileExists: fileExists,

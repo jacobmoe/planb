@@ -12,6 +12,10 @@ var _fsExtra = require('fs-extra');
 
 var _fsExtra2 = _interopRequireDefault(_fsExtra);
 
+var _crypto = require('crypto');
+
+var _crypto2 = _interopRequireDefault(_crypto);
+
 var _package = require('../../package');
 
 var _package2 = _interopRequireDefault(_package);
@@ -37,11 +41,7 @@ function cleanUrl(url) {
 }
 
 function endpointNameFromPath(path) {
-  return encodeURIComponent(cleanUrl(path));
-}
-
-function pathFromEndpointName(name) {
-  return decodeURIComponent(name);
+  return _crypto2['default'].createHash('sha256').update(cleanUrl(path)).digest('hex');
 }
 
 function largest(arr) {
@@ -96,22 +96,16 @@ function findIndexBy(arr, opts) {
     if (typeof opts === 'function') {
       return opts(item);
     } else {
-      var _ret = (function () {
-        var doesMatch = keys.length > 0;
+      var doesMatch = keys.length > 0;
 
-        keys.forEach(function (key) {
-          if (opts[key] !== item[key]) {
-            doesMatch = false;
-            return;
-          }
-        });
+      keys.forEach(function (key) {
+        if (opts[key] !== item[key]) {
+          doesMatch = false;
+          return;
+        }
+      });
 
-        return {
-          v: doesMatch
-        };
-      })();
-
-      if (typeof _ret === 'object') return _ret.v;
+      return doesMatch;
     }
   }
 
@@ -228,7 +222,6 @@ function getProp(obj, propPath) {
 exports['default'] = {
   createDirs: createDirs,
   endpointNameFromPath: endpointNameFromPath,
-  pathFromEndpointName: pathFromEndpointName,
   cleanUrl: cleanUrl,
   largest: largest,
   fileExists: fileExists,
