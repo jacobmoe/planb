@@ -10,7 +10,7 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-function _defineProperty(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); }
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 var _path = require('path');
 
@@ -25,7 +25,7 @@ var _defaults = require('../defaults');
 var defaults = _interopRequireWildcard(_defaults);
 
 var defaultConfigData = {
-  'endpoints': _defineProperty({}, defaults.port, (_defaults$port = {}, _defineProperty(_defaults$port, defaults.action, []), _defineProperty(_defaults$port, 'default', true), _defaults$port))
+  "endpoints": _defineProperty({}, defaults.port, (_defaults$port = {}, _defineProperty(_defaults$port, defaults.action, []), _defineProperty(_defaults$port, "default", true), _defaults$port))
 };
 
 exports.defaultConfigData = defaultConfigData;
@@ -66,7 +66,7 @@ exports['default'] = function (projectPath) {
       if (exists) {
         cb();
       } else if (err) {
-        cb({ message: 'Error creating project config', data: err });
+        cb({ message: "Error creating project config", data: err });
       } else {
         _utils2['default'].writeJsonFile(configPath, defaultConfigData, function (err) {
           if (err) {
@@ -320,7 +320,7 @@ exports['default'] = function (projectPath) {
 
     read(function (err, configData) {
       if (err) {
-        cb({ message: 'JSON config is invalid.' });
+        cb({ message: "JSON config is invalid." });
         return;
       }
 

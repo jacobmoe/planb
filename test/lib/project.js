@@ -154,6 +154,15 @@ describe('controller: project', () => {
       beforeEach(project.init)
       const config = configFactory.default(process.cwd())
 
+      it('handles long urls', done => {
+        var longUrl = "x".repeat(300)
+        project.addEndpoint(longUrl, {}, err => {
+          assert.notOk(err)
+
+          done()
+        })
+      })
+
       it('updates config and creates directory with default options', done => {
         project.addEndpoint(testUrl, {}, err => {
           assert.notOk(err)
