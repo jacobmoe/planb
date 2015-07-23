@@ -36,7 +36,13 @@ function cleanUrl(url) {
   return url.replace(/^https?:\/\//, '');
 }
 
-function endpointNameFromPath(path) {
+function endpointNameFromPath(path, opts) {
+  opts = opts || {};
+
+  if (opts.key && opts.key.length > 0) {
+    return opts.key;
+  }
+
   return encodeURIComponent(cleanUrl(path));
 }
 
@@ -96,22 +102,16 @@ function findIndexBy(arr, opts) {
     if (typeof opts === 'function') {
       return opts(item);
     } else {
-      var _ret = (function () {
-        var doesMatch = keys.length > 0;
+      var doesMatch = keys.length > 0;
 
-        keys.forEach(function (key) {
-          if (opts[key] !== item[key]) {
-            doesMatch = false;
-            return;
-          }
-        });
+      keys.forEach(function (key) {
+        if (opts[key] !== item[key]) {
+          doesMatch = false;
+          return;
+        }
+      });
 
-        return {
-          v: doesMatch
-        };
-      })();
-
-      if (typeof _ret === 'object') return _ret.v;
+      return doesMatch;
     }
   }
 

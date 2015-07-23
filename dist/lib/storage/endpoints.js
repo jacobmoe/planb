@@ -60,8 +60,7 @@ exports['default'] = function (storagePath) {
     opts = opts || {};
     var port = opts.port || defaults.port;
     var action = opts.action || defaults.action;
-    var name = _utilsJs2['default'].endpointNameFromPath(endpoint);
-
+    var name = _utilsJs2['default'].endpointNameFromPath(endpoint, opts);
     return _path2['default'].join(storagePath, port, action, name);
   }
 

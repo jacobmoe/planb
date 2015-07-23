@@ -154,6 +154,22 @@ describe('controller: project', () => {
       beforeEach(project.init)
       const config = configFactory.default(process.cwd())
 
+      it('returns an error if filename is too long', done => {
+        var tooLong = "x".repeat(256)
+        project.addEndpoint(tooLong, {}, err => {
+          assert.isObject(err)
+          done()
+        })
+      })
+
+      it('doesnt return an error if filename is too long and custom key is provided', done => {
+        var tooLong = "x".repeat(256)
+        project.addEndpoint(tooLong, {key: "customKey"}, err => {
+          assert.notOk(err)
+          done()
+        })
+      })
+
       it('updates config and creates directory with default options', done => {
         project.addEndpoint(testUrl, {}, err => {
           assert.notOk(err)
@@ -189,6 +205,29 @@ describe('controller: project', () => {
             const projectPath = path.join(process.cwd(), storageFactory.dataDirName)
             const name = utils.endpointNameFromPath(testUrl)
             const filePath = path.join(projectPath, opts.port, opts.action, name)
+
+            assert.fileExists(filePath)
+            done()
+          })
+        })
+      })
+
+      it('creates directory with custom key', done => {
+        const testUrl = 'http://www.someurl.com/api/v1/stuff'
+        const key = "customKey"
+        const opts = {port: '1234', action: 'post', key: key}
+
+        project.addEndpoint(testUrl, opts, err => {
+          assert.notOk(err)
+
+          config.read((err, configData) => {
+            assert.notOk(err)
+            //assert.equal(configData.endpoints['5000'].get.length, 0)
+            //assert.equal(configData.endpoints[opts.port][opts.action].length, 1)
+            //assert.equal(configData.endpoints[opts.port][opts.action][0], key)
+
+            const projectPath = path.join(process.cwd(), storageFactory.dataDirName)
+            const filePath = path.join(projectPath, opts.port, opts.action, key)
 
             assert.fileExists(filePath)
             done()

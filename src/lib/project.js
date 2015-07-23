@@ -69,6 +69,13 @@ function getRoot(cb, dots) {
 }
 
 function addEndpoint(url, opts, cb) {
+
+  var hasCustomKey = opts.key ? opts.key.length > 0 : false
+  if (!hasCustomKey && url.length > 255) {
+    cb({message: 'URL is too long. Supply a custom key using the --key option'})
+    return
+  }
+
   if (!validOptions(opts)) {
     cb({message: 'Invalid port or action'})
     return
@@ -78,6 +85,7 @@ function addEndpoint(url, opts, cb) {
     config.addEndpoint(url, opts, (err, info) => {
       if (err) { cb(err); return }
 
+      info.key = opts.key
       storage.endpoints.create(info.url, info, err => {
         if (err) { cb(err); return }
 

@@ -17,7 +17,10 @@ export default {
   add: function(url, opts) {
     if (!url || !url.length) return
 
-    project.addEndpoint(url, options(opts), err => {
+    var addOptions = options(opts)
+    addOptions.key = opts.key
+
+    project.addEndpoint(url, addOptions, err => {
       if (err) {
         console.log("Error adding endpoint.", err.message)
       } else {

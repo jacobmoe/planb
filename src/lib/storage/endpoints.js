@@ -36,8 +36,7 @@ export default function (storagePath) {
     opts = opts || {}
     const port = opts.port || defaults.port
     const action = opts.action || defaults.action
-    const name = utils.endpointNameFromPath(endpoint)
-
+    const name = utils.endpointNameFromPath(endpoint, opts)
     return path.join(storagePath, port, action, name)
   }
 
