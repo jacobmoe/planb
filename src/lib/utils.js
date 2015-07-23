@@ -18,7 +18,13 @@ function cleanUrl(url) {
   return url.replace(/^https?:\/\//, '')
 }
 
-function endpointNameFromPath(path) {
+function endpointNameFromPath(path, opts) {
+  opts = opts || {}
+
+  if (opts.key && opts.key.length > 0) {
+    return opts.key
+  }
+
   return encodeURIComponent(cleanUrl(path))
 }
 

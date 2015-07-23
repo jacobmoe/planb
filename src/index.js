@@ -17,6 +17,7 @@ program
 program
   .command('add [url]')
   .description('Add a new endpoint')
+  .option('-k, --key <key>', 'Add custom key to refer to endpont. Defaults to url')
   .action(manager.add)
 
 program
