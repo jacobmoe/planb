@@ -4,7 +4,7 @@ import path from 'path'
 
 import utils from '../utils'
 
-export default function(endpointPath) {
+export default function (endpointPath) {
 
   /*
    * create(data, ext, cb) / create(data, cb)
@@ -15,7 +15,7 @@ export default function(endpointPath) {
    * file extension. Finds the current version number, increments by one
    * to get the name of the next version.
    */
-  function create(data, ext, cb) {
+  function create (data, ext, cb) {
     if (arguments.length < 3) {
       cb = arguments[1]
       ext = null
@@ -44,7 +44,7 @@ export default function(endpointPath) {
    *
    * Return object: name, modifiedAt
    */
-  function all(callback) {
+  function all (callback) {
     fs.readdir(endpointPath, (err, versions) => {
       if (err && err.code === 'ENOENT') { callback(null, []); return }
       if (err) { callback(err); return }
@@ -69,15 +69,15 @@ export default function(endpointPath) {
     })
   }
 
-  function numFromFileName(name) {
+  function numFromFileName (name) {
     if (typeof name !== 'string') return null
 
     const num = name.replace(/\..*/, '')
-    return isNaN(num) ? null : parseInt(num)
+    return isNaN(num) ? null : parseInt(num, 10)
   }
 
-  function fileNameFromNum(num, cb) {
-    if (typeof num === 'string') num = parseInt(num)
+  function fileNameFromNum (num, cb) {
+    if (typeof num === 'string') num = parseInt(num, 10)
 
     fs.readdir(endpointPath, (err, versions) => {
       if (err) { cb(err); return }
@@ -99,7 +99,7 @@ export default function(endpointPath) {
   /*
    * Returns name of most recently added version
    */
-  function current(cb) {
+  function current (cb) {
     fs.readdir(endpointPath, (err, versions) => {
       if (err && err.code === 'ENOENT') {
         cb({message: 'Endpoint not found.'})
@@ -126,7 +126,7 @@ export default function(endpointPath) {
   /*
    * Accepts a version number and returns file contents
    */
-  function getData(versionNum, cb) {
+  function getData (versionNum, cb) {
     fileNameFromNum(versionNum, (err, versionName) => {
       if (err) { cb(err); return }
       if (!versionName) { cb({message: 'Version not found'}); return }
@@ -141,7 +141,7 @@ export default function(endpointPath) {
     })
   }
 
-  function remove(versionFileName, cb) {
+  function remove (versionFileName, cb) {
     const versionPath = path.join(endpointPath, versionFileName)
 
     fs.unlink(versionPath, err => {

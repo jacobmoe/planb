@@ -6,15 +6,15 @@ import * as defaults from '../defaults'
 
 export default function (storagePath) {
 
-  function checkEndpoint(url, opts, cb) {
+  function checkEndpoint (url, opts, cb) {
     utils.fileExists(getEndpointPath(url, opts), cb)
   }
 
-  function create(url, opts, cb) {
+  function create (url, opts, cb) {
     utils.createDirs(getEndpointPath(url, opts), cb)
   }
 
-  function remove(endpoint, opts, cb) {
+  function remove (endpoint, opts, cb) {
     const endpointPath = getEndpointPath(endpoint, opts)
 
     utils.fileExists(endpointPath, (err, exists) => {
@@ -32,7 +32,7 @@ export default function (storagePath) {
     })
   }
 
-  function getEndpointPath(endpoint, opts) {
+  function getEndpointPath (endpoint, opts) {
     opts = opts || {}
     const port = opts.port || defaults.port
     const action = opts.action || defaults.action

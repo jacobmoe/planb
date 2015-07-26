@@ -8,7 +8,7 @@ import storageFactory from './storage'
 import configFactory, { configName } from './config'
 import utils from './utils'
 
-function init(cb) {
+function init (cb) {
   const storage = storageFactory(process.cwd())
   const config = configFactory(process.cwd())
 
@@ -27,10 +27,10 @@ function init(cb) {
       if (dataDirExists && configExists) {
         cb({message: 'Project already initialized'})
       } else {
-        storage.createDataDir(function(err) {
+        storage.createDataDir(function (err) {
           if (err) {cb(err); return}
 
-          config.create(function(err) {
+          config.create(function (err) {
             if (err) {cb(err); return}
 
             cb()
@@ -41,7 +41,7 @@ function init(cb) {
   })
 }
 
-function getRoot(cb, dots) {
+function getRoot (cb, dots) {
   dots = dots || '.'
 
   const currentPath = path.join(process.cwd(), dots)
@@ -68,7 +68,7 @@ function getRoot(cb, dots) {
   })
 }
 
-function addEndpoint(url, opts, cb) {
+function addEndpoint (url, opts, cb) {
   if (!validOptions(opts)) {
     cb({message: 'Invalid port or action'})
     return
@@ -87,7 +87,7 @@ function addEndpoint(url, opts, cb) {
   }, cb)
 }
 
-function removeEndpoint(url, opts, cb) {
+function removeEndpoint (url, opts, cb) {
   buildConfigStorage((config, storage) => {
     config.removeEndpoint(url, opts, (err, info) => {
       if (err) { cb(err); return }
@@ -104,7 +104,7 @@ function removeEndpoint(url, opts, cb) {
 /*
  * Make request against all GET endpoints and create a new version
  */
-function fetchVersions(callback, reqCallback, reqErrCallback) {
+function fetchVersions (callback, reqCallback, reqErrCallback) {
   const transform = configTransformer((storage, item, cb) => {
     if (item.action !== 'get') return
     let url = item.url
@@ -143,7 +143,7 @@ function fetchVersions(callback, reqCallback, reqErrCallback) {
   transform(callback)
 }
 
-function ensureEndpointExistance(storage, url, opts, cb) {
+function ensureEndpointExistance (storage, url, opts, cb) {
   storage.endpoints.checkEndpoint(url, opts, (err, exists) => {
     if (err) { cb(err); return }
 
@@ -161,7 +161,7 @@ function ensureEndpointExistance(storage, url, opts, cb) {
  * Items include url, port, action, versions info array
  * and name of current version
  */
-function itemize(callback) {
+function itemize (callback) {
   const transform = configTransformer((storage, item, cb) => {
     const opts = { port: item.port, action: item.action }
     const versions = storage.versions(item.url, opts)
@@ -183,7 +183,7 @@ function itemize(callback) {
 }
 
 /* Remove current version from endpoint */
-function rollbackVersion(url, opts, cb) {
+function rollbackVersion (url, opts, cb) {
   buildConfigStorage((config, storage) => {
     const versions = storage.versions(url, opts)
 
@@ -195,9 +195,9 @@ function rollbackVersion(url, opts, cb) {
   }, cb)
 }
 
-function diff(url, v1, v2, opts, cb) {
-  const v1Num = parseInt(v1)
-  const v2Num = parseInt(v2)
+function diff (url, v1, v2, opts, cb) {
+  const v1Num = parseInt(v1, 10)
+  const v2Num = parseInt(v2, 10)
 
   if ((v1Num === 0 || v1Num) && (v2Num === 0 || v2Num)) {
     diffVersions(url, v1Num, v2Num, opts, cb)
@@ -206,7 +206,7 @@ function diff(url, v1, v2, opts, cb) {
   }
 }
 
-function diffCurrentVersion(url, versionNum, opts, cb) {
+function diffCurrentVersion (url, versionNum, opts, cb) {
   buildConfigStorage((config, storage) => {
     const versions = storage.versions(url, opts)
 
@@ -239,7 +239,7 @@ function diffCurrentVersion(url, versionNum, opts, cb) {
   }, cb)
 }
 
-function diffVersions(url, v1, v2, opts, cb) {
+function diffVersions (url, v1, v2, opts, cb) {
   buildConfigStorage((config, storage) => {
     const versions = storage.versions(url, opts)
 
@@ -247,7 +247,7 @@ function diffVersions(url, v1, v2, opts, cb) {
   }, cb)
 }
 
-function getVersionDiffs(versions, v1, v2, cb) {
+function getVersionDiffs (versions, v1, v2, cb) {
   versions.getData(v1.toString(), (err, v1Data) => {
     if (err) { cb(err); return }
 
@@ -267,12 +267,11 @@ function getVersionDiffs(versions, v1, v2, cb) {
   })
 }
 
-
 /*
  * Convenience method to get rootPath and build config
  * and storage instances
  */
-function buildConfigStorage(success, fail) {
+function buildConfigStorage (success, fail) {
   getRoot((err, rootPath) => {
     if (err || !rootPath) {
       fail(err || { message: 'Project root not found' })
@@ -293,7 +292,7 @@ function buildConfigStorage(success, fail) {
  *
  * Returns a function that accepts a callback
  */
-function configTransformer(itemHook, endHook) {
+function configTransformer (itemHook, endHook) {
   return function (callback) {
     buildConfigStorage((config, storage) => {
       config.flattened((err, arr) => {
@@ -317,7 +316,7 @@ function configTransformer(itemHook, endHook) {
   }
 }
 
-function validOptions(opts) {
+function validOptions (opts) {
   opts = opts || {}
 
   if (opts.action && !utils.validAction(opts.action)) {

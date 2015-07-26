@@ -247,8 +247,8 @@ function rollbackVersion(url, opts, cb) {
 }
 
 function diff(url, v1, v2, opts, cb) {
-  var v1Num = parseInt(v1);
-  var v2Num = parseInt(v2);
+  var v1Num = parseInt(v1, 10);
+  var v2Num = parseInt(v2, 10);
 
   if ((v1Num === 0 || v1Num) && (v2Num === 0 || v2Num)) {
     diffVersions(url, v1Num, v2Num, opts, cb);

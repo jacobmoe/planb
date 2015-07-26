@@ -22,9 +22,9 @@ exports['default'] = {
   init: function init() {
     _project2['default'].init(function (err) {
       if (err) {
-        console.log("Error initializing project.", err.message);
+        console.log('Error initializing project.', err.message);
       } else {
-        console.log("Project initialized");
+        console.log('Project initialized');
       }
     });
   },
@@ -34,7 +34,7 @@ exports['default'] = {
 
     _project2['default'].addEndpoint(url, options(opts), function (err) {
       if (err) {
-        console.log("Error adding endpoint.", err.message);
+        console.log('Error adding endpoint.', err.message);
       } else {
         console.log('Endpoint added');
       }
@@ -44,19 +44,19 @@ exports['default'] = {
   fetch: function fetch() {
     _project2['default'].fetchVersions(function (err) {
       if (err) {
-        console.log("Error fetching new versions.", err.message);
+        console.log('Error fetching new versions.', err.message);
       }
     }, function (item) {
-      console.log("Updating", item.url, "for port", item.port);
+      console.log('Updating', item.url, 'for port', item.port);
     }, function (url) {
-      console.log("Could not update", url);
+      console.log('Could not update', url);
     });
   },
 
   list: function list() {
     _project2['default'].itemize(function (err, items) {
       if (err) {
-        console.log("Error getting list.", err.message);
+        console.log('Error getting list.', err.message);
       } else {
         items.forEach(function (item) {
           if (!item) return;
@@ -92,11 +92,11 @@ exports['default'] = {
 
     _project2['default'].rollbackVersion(endpoint, options(opts), function (err) {
       if (err) {
-        console.log("Error rolling back.", err.message);
+        console.log('Error rolling back.', err.message);
         return;
       }
 
-      console.log("Rolled back endpoint");
+      console.log('Rolled back endpoint');
     });
   },
 

@@ -8,7 +8,7 @@ import { dataDirName } from './storage'
 
 const servers = []
 
-function registerProjectItem(app, item, storagePath) {
+function registerProjectItem (app, item, storagePath) {
   if (!item.url) return
   const parsedUrl = url.parse('http://' + utils.cleanUrl(item.url))
 
@@ -26,7 +26,7 @@ function registerProjectItem(app, item, storagePath) {
   })
 }
 
-export default function() {
+export default function () {
   project.getRoot((err, projectRoot) => {
     if (err || !projectRoot) {
       console.log('Project not initialized, probably')
@@ -49,7 +49,7 @@ export default function() {
 
         app.set('port', port)
 
-        servers.push(app.listen(port, function() {
+        servers.push(app.listen(port, function () {
           console.log('Listening on port', port)
         }))
       })
@@ -57,7 +57,7 @@ export default function() {
   })
 }
 
-function projectItemsByPort(items) {
+function projectItemsByPort (items) {
   items = items || []
 
   return items.reduce((result, item) => {
@@ -68,14 +68,14 @@ function projectItemsByPort(items) {
   }, {})
 }
 
-function versionPath(storagePath, url, item) {
+function versionPath (storagePath, url, item) {
   const epName = utils.endpointNameFromPath(url)
   const epPath = path.join(storagePath, item.port, item.action, epName)
 
   return path.join(epPath, item.current)
 }
 
-export function close() {
+export function close () {
   servers.forEach(server => {
     server.close()
   })

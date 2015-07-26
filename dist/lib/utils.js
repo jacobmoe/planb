@@ -30,7 +30,7 @@ function createDirs(path, cb) {
       cb(null);return;
     }
 
-    if (err.code == 'EEXIST') cb(null);else cb(err);
+    if (err.code === 'EEXIST') cb(null);else cb(err);
   });
 }
 
@@ -96,16 +96,22 @@ function findIndexBy(arr, opts) {
     if (typeof opts === 'function') {
       return opts(item);
     } else {
-      var doesMatch = keys.length > 0;
+      var _ret = (function () {
+        var doesMatch = keys.length > 0;
 
-      keys.forEach(function (key) {
-        if (opts[key] !== item[key]) {
-          doesMatch = false;
-          return;
-        }
-      });
+        keys.forEach(function (key) {
+          if (opts[key] !== item[key]) {
+            doesMatch = false;
+            return;
+          }
+        });
 
-      return doesMatch;
+        return {
+          v: doesMatch
+        };
+      })();
+
+      if (typeof _ret === 'object') return _ret.v;
     }
   }
 

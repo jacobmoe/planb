@@ -17,7 +17,7 @@ export default function (projectPath) {
   * Nothing is returned is directory created successfully,
   * or if directory already exists
   */
-  function createDataDir(cb) {
+  function createDataDir (cb) {
     fs.mkdir(storagePath, err => {
       if (err && err.code !== 'EEXIST') {
         cb({message: 'Error creating data directory', data: err})
@@ -27,11 +27,11 @@ export default function (projectPath) {
     })
   }
 
-  function checkForDataDir(cb) {
+  function checkForDataDir (cb) {
     utils.fileExists(storagePath, cb)
   }
 
-  function versions(endpoint, opts) {
+  function versions (endpoint, opts) {
     const port = opts.port || defaults.port
     const action = opts.action || defaults.action
     const name = utils.endpointNameFromPath(endpoint)

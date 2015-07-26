@@ -36,13 +36,13 @@ program
 
 program
   .command('remove [endpoint]')
-  .description("Remove the endpoint and all its versions")
+  .description('Remove the endpoint and all its versions')
   .action(manager.remove)
 
 program
   .command('diff [endpoint] [v1] [v2]')
-  .description("Diff versions. With no version numbers, \n" +
-               "diffs the current version with the previous")
+  .description('Diff versions. With no version numbers, \n' +
+               'diffs the current version with the previous')
   .action(manager.diff)
 
 program

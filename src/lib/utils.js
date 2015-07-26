@@ -4,26 +4,26 @@ import crypto from 'crypto'
 import packageJson from '../../package'
 import * as defaults from './defaults'
 
-function createDirs(path, cb) {
+function createDirs (path, cb) {
   fs.mkdirs(path, err => {
     if (!err) { cb(null); return }
 
-    if (err.code == 'EEXIST') cb(null)
+    if (err.code === 'EEXIST') cb(null)
     else cb(err)
   })
 }
 
-function cleanUrl(url) {
+function cleanUrl (url) {
   url = url || ''
 
   return url.replace(/^https?:\/\//, '')
 }
 
-function endpointNameFromPath(path) {
+function endpointNameFromPath (path) {
   return crypto.createHash('sha256').update(cleanUrl(path)).digest('hex')
 }
 
-function largest(arr) {
+function largest (arr) {
   if (arr.length) {
     return Math.max.apply(Math, arr)
   } else {
@@ -31,7 +31,7 @@ function largest(arr) {
   }
 }
 
-function fileExists(path, cb) {
+function fileExists (path, cb) {
   fs.stat(path, err => {
     if (err && err.code === 'ENOENT') {
       cb(null, false)
@@ -43,13 +43,13 @@ function fileExists(path, cb) {
   })
 }
 
-function writeJsonFile(path, data, cb) {
+function writeJsonFile (path, data, cb) {
   const json = JSON.stringify(data, null, 2)
 
   fs.writeFile(path, json, 'utf8', cb)
 }
 
-function readJsonFile(path, cb) {
+function readJsonFile (path, cb) {
   fs.readFile(path, 'utf8', (err, json) => {
     if (err) { cb(err); return }
 
@@ -66,10 +66,10 @@ function readJsonFile(path, cb) {
   })
 }
 
-function findIndexBy(arr, opts) {
+function findIndexBy (arr, opts) {
   const keys = Object.keys(opts)
 
-  function match(item) {
+  function match (item) {
     if (typeof opts === 'function') {
       return opts(item)
     } else {
@@ -93,7 +93,7 @@ function findIndexBy(arr, opts) {
   return null
 }
 
-function findBy(arr, opts) {
+function findBy (arr, opts) {
   const index = findIndexBy(arr, opts)
 
   if (index) {
@@ -114,7 +114,7 @@ function findBy(arr, opts) {
  * const obj = { "5000": {get: [], default: true}, "5001": {get: []} }
  * findKeyBy(obj, {default: true}) // returns "5000"
  */
-function findKeyBy(obj, opts) {
+function findKeyBy (obj, opts) {
   obj = obj || {}
   opts = opts || {}
   let key = null
@@ -150,7 +150,7 @@ function findKeyBy(obj, opts) {
   return key
 }
 
-function getProjectFileName(ext) {
+function getProjectFileName (ext) {
   const name = packageJson.name
 
   let fileName = '.' + name + '.' + ext
@@ -162,11 +162,11 @@ function getProjectFileName(ext) {
   return fileName
 }
 
-function validAction(action) {
+function validAction (action) {
   return defaults.allowedActions.indexOf(action) > -1
 }
 
-function validPort(port) {
+function validPort (port) {
   const portMin = 1024
   const portMax = 65535
 
@@ -176,14 +176,14 @@ function validPort(port) {
   return isNumber && validPortRange
 }
 
-function getProp(obj, propPath) {
+function getProp (obj, propPath) {
   if (typeof propPath === 'string') {
     propPath = propPath.split('.')
   }
   var result = obj
 
   try {
-    propPath.forEach(function(name) {
+    propPath.forEach(function (name) {
       result = result[name]
     })
 

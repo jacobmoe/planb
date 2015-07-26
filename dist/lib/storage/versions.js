@@ -101,11 +101,11 @@ exports['default'] = function (endpointPath) {
     if (typeof name !== 'string') return null;
 
     var num = name.replace(/\..*/, '');
-    return isNaN(num) ? null : parseInt(num);
+    return isNaN(num) ? null : parseInt(num, 10);
   }
 
   function fileNameFromNum(num, cb) {
-    if (typeof num === 'string') num = parseInt(num);
+    if (typeof num === 'string') num = parseInt(num, 10);
 
     _fs2['default'].readdir(endpointPath, function (err, versions) {
       if (err) {

@@ -4,44 +4,44 @@ import prompt from 'prompt'
 import project from './project'
 
 export default {
-  init: function() {
+  init: function () {
     project.init(err => {
       if (err) {
-        console.log("Error initializing project.", err.message)
+        console.log('Error initializing project.', err.message)
       } else {
-        console.log("Project initialized")
+        console.log('Project initialized')
       }
     })
   },
 
-  add: function(url, opts) {
+  add: function (url, opts) {
     if (!url || !url.length) return
 
     project.addEndpoint(url, options(opts), err => {
       if (err) {
-        console.log("Error adding endpoint.", err.message)
+        console.log('Error adding endpoint.', err.message)
       } else {
         console.log('Endpoint added')
       }
     })
   },
 
-  fetch: function() {
+  fetch: function () {
     project.fetchVersions(err => {
       if (err) {
-        console.log("Error fetching new versions.", err.message)
+        console.log('Error fetching new versions.', err.message)
       }
     }, item => {
-      console.log("Updating", item.url, "for port", item.port)
+      console.log('Updating', item.url, 'for port', item.port)
     }, url => {
-      console.log("Could not update", url)
+      console.log('Could not update', url)
     })
   },
 
-  list: function() {
+  list: function () {
     project.itemize((err, items) => {
       if (err) {
-        console.log("Error getting list.", err.message)
+        console.log('Error getting list.', err.message)
       } else {
         items.forEach(item => {
           if (!item) return
@@ -69,7 +69,7 @@ export default {
     })
   },
 
-  rollback: function(endpoint, opts) {
+  rollback: function (endpoint, opts) {
     if (!endpoint || !endpoint.length) {
       console.log('Missing endpoint. Try the list command')
       return
@@ -77,15 +77,15 @@ export default {
 
     project.rollbackVersion(endpoint, options(opts), err => {
       if (err) {
-        console.log("Error rolling back.", err.message)
+        console.log('Error rolling back.', err.message)
         return
       }
 
-      console.log("Rolled back endpoint")
+      console.log('Rolled back endpoint')
     })
   },
 
-  remove: function(endpoint, opts) {
+  remove: function (endpoint, opts) {
     if (!endpoint) {
       console.log('Missing endpoint. Try the list command')
       return
@@ -120,7 +120,7 @@ export default {
     })
   },
 
-  diff: function(endpoint, v1, v2, opts) {
+  diff: function (endpoint, v1, v2, opts) {
     if (!endpoint) {
       console.log('Missing endpoint. Try the list command')
       return
@@ -140,8 +140,7 @@ export default {
   }
 }
 
-
-function options(opts) {
+function options (opts) {
   opts = opts || {}
 
   let result = {}
