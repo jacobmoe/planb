@@ -194,6 +194,17 @@ function getProp (obj, propPath) {
   }
 }
 
+function groupBy (items, propName) {
+  items = items || []
+
+  return items.reduce((result, item) => {
+    if (!result[item[propName]]) result[item[propName]] = []
+    result[item[propName]].push(item)
+
+    return result
+  }, {})
+}
+
 export default {
   createDirs: createDirs,
   endpointNameFromPath: endpointNameFromPath,
@@ -208,5 +219,6 @@ export default {
   getProjectFileName: getProjectFileName,
   validAction: validAction,
   validPort: validPort,
-  getProp: getProp
+  getProp: getProp,
+  groupBy: groupBy
 }

@@ -31,39 +31,34 @@ var _storage = require('./storage');
 
 var servers = [];
 
-function registerProjectItem(app, item, storagePath) {
-  if (!item.url) return;
-  var parsedUrl = _url2['default'].parse('http://' + _utils2['default'].cleanUrl(item.url));
-
-  app[item.action](parsedUrl.pathname, function (req, res) {
-    if (!item.current) {
-      res.status(404).send('No versions found for ' + item.url);
-      return;
-    }
-
-    res.sendFile(versionPath(storagePath, _path2['default'].join(parsedUrl.host, req.url), item));
-  });
-}
-
-exports['default'] = function () {
+exports['default'] = function (opts) {
   _project2['default'].getRoot(function (err, projectRoot) {
     if (err || !projectRoot) {
       console.log('Project not initialized, probably');
     }
 
-    _project2['default'].itemize(function (err, items) {
-      if (err || !items || !items.length) {
+    _project2['default'].itemize(function (err, projItems) {
+      if (err || !projItems || !projItems.length) {
         console.log('Add an endpoint first');
         return;
       }
 
-      var itemsByPort = projectItemsByPort(items);
+      var itemsByPort = _utils2['default'].groupBy(projItems, 'port');
 
       Object.keys(itemsByPort).forEach(function (port) {
         var app = (0, _express2['default'])();
 
-        itemsByPort[port].forEach(function (item) {
-          registerProjectItem(app, item, _path2['default'].join(projectRoot, _storage.dataDirName));
+        app.all('*', function (req, res) {
+          var action = req.method.toLowerCase();
+          var items = _utils2['default'].groupBy(itemsByPort[port], 'action')[action];
+
+          var item = findItemByPath(items, req.path);
+
+          if (item) {
+            respondForItem(req, res, projectRoot, item);
+          } else {
+            res.status(404).send('not found');
+          }
         });
 
         app.set('port', port);
@@ -76,15 +71,31 @@ exports['default'] = function () {
   });
 };
 
-function projectItemsByPort(items) {
-  items = items || [];
+function respondForItem(req, res, projectRoot, item) {
+  var parsedUrl = _url2['default'].parse('http://' + _utils2['default'].cleanUrl(item.url));
 
-  return items.reduce(function (result, item) {
-    if (!result[item.port]) result[item.port] = [];
-    result[item.port].push(item);
+  var vPath = versionPath(_path2['default'].join(projectRoot, _storage.dataDirName), _path2['default'].join(parsedUrl.host, req.url), item);
 
-    return result;
-  }, {});
+  _utils2['default'].fileExists(vPath, function (exists) {
+    if (exists) {
+      res.sendFile(versionPath(vPath));
+    } else {
+      res.status(404).send('not found');
+    }
+  });
+}
+
+function findItemByPath(items, path) {
+  for (var i = 0; i < items.length; i++) {
+    var parsedUrl = _url2['default'].parse('http://' + _utils2['default'].cleanUrl(items[i].url));
+
+    if (parsedUrl.path === path) {
+      items[i].parsedUrl = parsedUrl;
+      return items[i];
+    }
+  }
+
+  return null;
 }
 
 function versionPath(storagePath, url, item) {

@@ -21,7 +21,7 @@ var _libDefaults = require('./lib/defaults');
 
 var defaults = _interopRequireWildcard(_libDefaults);
 
-_commander2['default'].option('-p, --port <port>', 'Set port. Default: ' + defaults.port).option('-a, --action <action>', 'Set action. Default: ' + defaults.action);
+_commander2['default'].option('-p, --port <port>', 'Set port. Default: ' + defaults.port).option('-a, --action <action>', 'Set action. Default: ' + defaults.action).option('-r, --record', 'Save missing endpoints when serving');
 
 _commander2['default'].command('init').description('Initialize a project in current directory').action(_libManager2['default'].init);
 

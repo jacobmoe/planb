@@ -8,6 +8,7 @@ import * as defaults from './lib/defaults'
 program
   .option('-p, --port <port>', 'Set port. Default: ' + defaults.port)
   .option('-a, --action <action>', 'Set action. Default: ' + defaults.action)
+  .option('-r, --record', 'Save missing endpoints when serving')
 
 program
   .command('init')

@@ -8,43 +8,34 @@ import { dataDirName } from './storage'
 
 const servers = []
 
-function registerProjectItem (app, item, storagePath) {
-  if (!item.url) return
-  const parsedUrl = url.parse('http://' + utils.cleanUrl(item.url))
-
-  app[item.action](parsedUrl.pathname, (req, res) => {
-    if (!item.current) {
-      res.status(404).send('No versions found for ' + item.url)
-      return
-    }
-
-    res.sendFile(versionPath(
-      storagePath,
-      path.join(parsedUrl.host, req.url),
-      item
-    ))
-  })
-}
-
-export default function () {
+export default function (opts) {
   project.getRoot((err, projectRoot) => {
     if (err || !projectRoot) {
       console.log('Project not initialized, probably')
     }
 
-    project.itemize((err, items) => {
-      if (err || !items || !items.length) {
+    project.itemize((err, projItems) => {
+      if (err || !projItems || !projItems.length) {
         console.log('Add an endpoint first')
         return
       }
 
-      const itemsByPort = projectItemsByPort(items)
+      const itemsByPort = utils.groupBy(projItems, 'port')
 
       Object.keys(itemsByPort).forEach(port => {
         const app = express()
 
-        itemsByPort[port].forEach(item => {
-          registerProjectItem(app, item, path.join(projectRoot, dataDirName))
+        app.all('*', function (req, res) {
+          const action = req.method.toLowerCase()
+          const items = utils.groupBy(itemsByPort[port], 'action')[action]
+
+          const item = findItemByPath(items, req.path)
+
+          if (item) {
+            respondForItem(req, res, projectRoot, item)
+          } else {
+            res.status(404).send('not found')
+          }
         })
 
         app.set('port', port)
@@ -57,15 +48,35 @@ export default function () {
   })
 }
 
-function projectItemsByPort (items) {
-  items = items || []
+function respondForItem (req, res, projectRoot, item) {
+  const parsedUrl = url.parse('http://' + utils.cleanUrl(item.url))
 
-  return items.reduce((result, item) => {
-    if (!result[item.port]) result[item.port] = []
-    result[item.port].push(item)
+  const vPath = versionPath(
+    path.join(projectRoot, dataDirName),
+    path.join(parsedUrl.host, req.url),
+    item
+  )
 
-    return result
-  }, {})
+  utils.fileExists(vPath, function (exists) {
+    if (exists) {
+      res.sendFile(versionPath(vPath))
+    } else {
+      res.status(404).send('not found')
+    }
+  })
+}
+
+function findItemByPath (items, path) {
+  for (var i = 0; i < items.length; i++) {
+    const parsedUrl = url.parse('http://' + utils.cleanUrl(items[i].url))
+
+    if (parsedUrl.path === path) {
+      items[i].parsedUrl = parsedUrl
+      return items[i]
+    }
+  }
+
+  return null
 }
 
 function versionPath (storagePath, url, item) {
