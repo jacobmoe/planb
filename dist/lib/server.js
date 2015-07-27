@@ -76,11 +76,11 @@ function respondForItem(req, res, projectRoot, item) {
 
   var vPath = versionPath(_path2['default'].join(projectRoot, _storage.dataDirName), _path2['default'].join(parsedUrl.host, req.url), item);
 
-  _utils2['default'].fileExists(vPath, function (exists) {
-    if (exists) {
-      res.sendFile(versionPath(vPath));
-    } else {
+  _utils2['default'].fileExists(vPath, function (err, exists) {
+    if (err || !exists) {
       res.status(404).send('not found');
+    } else {
+      res.sendFile(vPath);
     }
   });
 }
@@ -99,6 +99,8 @@ function findItemByPath(items, path) {
 }
 
 function versionPath(storagePath, url, item) {
+  if (!item) return null;
+
   var epName = _utils2['default'].endpointNameFromPath(url);
   var epPath = _path2['default'].join(storagePath, item.port, item.action, epName);
 

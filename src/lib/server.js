@@ -57,11 +57,11 @@ function respondForItem (req, res, projectRoot, item) {
     item
   )
 
-  utils.fileExists(vPath, function (exists) {
-    if (exists) {
-      res.sendFile(versionPath(vPath))
-    } else {
+  utils.fileExists(vPath, function (err, exists) {
+    if (err || !exists) {
       res.status(404).send('not found')
+    } else {
+      res.sendFile(vPath)
     }
   })
 }
@@ -80,6 +80,8 @@ function findItemByPath (items, path) {
 }
 
 function versionPath (storagePath, url, item) {
+  if (!item) return null
+
   const epName = utils.endpointNameFromPath(url)
   const epPath = path.join(storagePath, item.port, item.action, epName)
 
