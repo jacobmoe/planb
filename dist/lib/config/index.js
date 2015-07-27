@@ -347,6 +347,67 @@ exports['default'] = function (projectPath) {
     });
   }
 
+  /*
+   * Sets a base URL for a port (or default)
+   */
+  function setBase(base, port, cb) {
+    read(function (err, configData) {
+      if (err) {
+        cb(err);return;
+      }
+
+      var endpoints = configData.endpoints || {};
+
+      if (!_utils2['default'].validPort(port)) {
+        port = defaultEndpointPort(endpoints);
+      }
+
+      if (!endpoints[port]) endpoints[port] = {};
+
+      endpoints[port].base = base;
+
+      update(configData, cb);
+    });
+  }
+
+  /*
+   * Gets a base URL for a port (or default)
+   */
+  function getBase(port, cb) {
+    read(function (err, configData) {
+      if (err) {
+        cb(err);return;
+      }
+
+      var endpoints = configData.endpoints || {};
+
+      if (!_utils2['default'].validPort(port)) {
+        port = defaultEndpointPort(endpoints);
+      }
+
+      if (!endpoints[port]) cb({ message: 'port not found' });
+
+      cb(null, endpoints[port].base);
+    });
+  }
+
+  /*
+   * Returns a list of bases with their ports
+   */
+  function listBases(cb) {
+    read(function (err, configData) {
+      if (err) {
+        cb(err);return;
+      }
+
+      var endpoints = configData.endpoints || {};
+
+      cb(null, Object.keys(endpoints).map(function (port) {
+        return { port: port, base: endpoints[port].base };
+      }));
+    });
+  }
+
   return {
     create: create,
     read: read,
@@ -356,6 +417,9 @@ exports['default'] = function (projectPath) {
     removeEndpoint: removeEndpoint,
     getDefaultPort: getDefaultPort,
     setDefaultPort: setDefaultPort,
-    flattened: flattened
+    flattened: flattened,
+    setBase: setBase,
+    getBase: getBase,
+    listBases: listBases
   };
 };

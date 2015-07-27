@@ -4,10 +4,10 @@ import utils from '../utils'
 import * as defaults from '../defaults'
 
 export const defaultConfigData = {
-  "endpoints": {
+  'endpoints': {
     [defaults.port]: {
       [defaults.action]: [],
-      "default": true
+      'default': true
     }
   }
 }
@@ -17,7 +17,7 @@ export const configName = utils.getProjectFileName('json')
 export default function (projectPath) {
 
   /* get config file object */
-  function read(cb) {
+  function read (cb) {
     const configPath = path.join(projectPath, configName)
     utils.readJsonFile(configPath, (err, data) => {
       if (err && err.code === 'ENOENT') {
@@ -30,7 +30,7 @@ export default function (projectPath) {
     })
   }
 
-  function checkForConfigFile(cb) {
+  function checkForConfigFile (cb) {
     utils.fileExists(path.join(projectPath, configName), cb)
   }
 
@@ -40,14 +40,14 @@ export default function (projectPath) {
   * Nothing is returned if file created successfully,
   * or if file already exists. Otherwise, an error is returned.
   */
-  function create(cb) {
+  function create (cb) {
     const configPath = path.join(projectPath, configName)
 
     checkForConfigFile((err, exists) => {
       if (exists) {
         cb()
       } else if (err) {
-        cb({message: "Error creating project config", data: err})
+        cb({message: 'Error creating project config', data: err})
       } else {
         utils.writeJsonFile(configPath, defaultConfigData, err => {
           if (err) {
@@ -60,7 +60,7 @@ export default function (projectPath) {
     })
   }
 
-  function update(data, cb) {
+  function update (data, cb) {
     const configPath = path.join(projectPath, configName)
 
     utils.writeJsonFile(configPath, data, err => {
@@ -72,7 +72,7 @@ export default function (projectPath) {
     })
   }
 
-  function defaultEndpointPort(endpoints) {
+  function defaultEndpointPort (endpoints) {
     let port = utils.findKeyBy(endpoints, {default: true})
 
     if (!port && endpoints[defaults.port]) {
@@ -82,13 +82,13 @@ export default function (projectPath) {
     return port
   }
 
-  function newEndpoint(opts) {
+  function newEndpoint (opts) {
     const action = utils.validAction(opts.action) ? opts.action : defaults.action
 
     return { [action]: [] }
   }
 
-  function addEndpointToAction(endpoint, action, url) {
+  function addEndpointToAction (endpoint, action, url) {
     url = utils.cleanUrl(url)
 
     if (!endpoint[action]) {
@@ -106,7 +106,7 @@ export default function (projectPath) {
     return endpoint
   }
 
-  function addEndpointForPort(endpoints, url, port, opts) {
+  function addEndpointForPort (endpoints, url, port, opts) {
     const action = utils.validAction(opts.action) ? opts.action : defaults.action
 
     if (!endpoints[port]) {
@@ -118,7 +118,7 @@ export default function (projectPath) {
     return {port: port, action: action, url: url}
   }
 
-  function addEndpointForDefault(endpoints, url, opts) {
+  function addEndpointForDefault (endpoints, url, opts) {
     const action = utils.validAction(opts.action) ? opts.action : defaults.action
     let port
 
@@ -155,7 +155,7 @@ export default function (projectPath) {
   * Returns an info object describing new endpoint
   * Includes port, action and url
   */
-  function addEndpoint(url, opts, cb) {
+  function addEndpoint (url, opts, cb) {
     opts = opts || {}
 
     read((err, configData) => {
@@ -179,7 +179,7 @@ export default function (projectPath) {
     })
   }
 
-  function removeEndpointFromAction(endpoint, action, url) {
+  function removeEndpointFromAction (endpoint, action, url) {
     let urls = endpoint[action]
 
     if (!urls || !urls.length) return null
@@ -207,7 +207,7 @@ export default function (projectPath) {
   * Remove url from the default config item and action if options
   * not supplied. Otherwise, by port and/or action and remove.
   */
-  function removeEndpoint(url, opts, cb) {
+  function removeEndpoint (url, opts, cb) {
     opts = opts || {}
 
     read((err, configData) => {
@@ -244,7 +244,7 @@ export default function (projectPath) {
     })
   }
 
-  function getDefaultPort(cb) {
+  function getDefaultPort (cb) {
     read((err, configData) => {
       if (err) { cb(err); return }
 
@@ -254,7 +254,7 @@ export default function (projectPath) {
     })
   }
 
-  function setDefaultPort(port, cb) {
+  function setDefaultPort (port, cb) {
     if (!utils.validPort(port)) {
       cb({message: 'Not a valid port'})
       return
@@ -284,12 +284,12 @@ export default function (projectPath) {
    * Returns a convenient array of config items that include
    * url, port and action
    */
-  function flattened(cb) {
+  function flattened (cb) {
     let result = []
 
     read((err, configData) => {
       if (err) {
-        cb({message: "JSON config is invalid."})
+        cb({message: 'JSON config is invalid.'})
         return
       }
 
@@ -316,6 +316,61 @@ export default function (projectPath) {
     })
   }
 
+  /*
+   * Sets a base URL for a port (or default)
+   */
+  function setBase (base, port, cb) {
+    read((err, configData) => {
+      if (err) { cb(err); return }
+
+      const endpoints = configData.endpoints || {}
+
+      if (!utils.validPort(port)) {
+        port = defaultEndpointPort(endpoints)
+      }
+
+      if (!endpoints[port]) endpoints[port] = {}
+
+      endpoints[port].base = base
+
+      update(configData, cb)
+    })
+  }
+
+  /*
+   * Gets a base URL for a port (or default)
+   */
+  function getBase (port, cb) {
+    read((err, configData) => {
+      if (err) { cb(err); return }
+
+      const endpoints = configData.endpoints || {}
+
+      if (!utils.validPort(port)) {
+        port = defaultEndpointPort(endpoints)
+      }
+
+      if (!endpoints[port]) cb({message: 'port not found'})
+
+      cb(null, endpoints[port].base)
+    })
+  }
+
+  /*
+   * Returns a list of bases with their ports
+   */
+  function listBases (cb) {
+    read((err, configData) => {
+      if (err) { cb(err); return }
+
+      const endpoints = configData.endpoints || {}
+
+      cb(null, Object.keys(endpoints).map(function (port) {
+        return {port: port, base: endpoints[port].base}
+      }))
+    })
+  }
+
   return {
     create: create,
     read: read,
@@ -325,7 +380,10 @@ export default function (projectPath) {
     removeEndpoint: removeEndpoint,
     getDefaultPort: getDefaultPort,
     setDefaultPort: setDefaultPort,
-    flattened: flattened
+    flattened: flattened,
+    setBase: setBase,
+    getBase: getBase,
+    listBases: listBases
   }
 
 }

@@ -1,9 +1,11 @@
+/* global cleanup SRC_DIR assert describe before beforeEach afterEach
+   it context */
+
 import fs from 'fs'
 
 // variables in ES6 imports. how?
 const srcPath = '../../../' + SRC_DIR
 const configFactory = require(srcPath + '/lib/config')
-const defaults = require(srcPath + '/lib/defaults')
 const project = require(srcPath + '/lib/project')
 const utils = require(srcPath + '/lib/utils')
 
@@ -84,7 +86,7 @@ describe('config/index', () => {
 
   describe('addEndpoint', () => {
     const url = 'http://test-endpoint.com/api/v1/stuff/43'
-    const opts = {port: "1234", action: 'put'}
+    const opts = {port: '1234', action: 'put'}
 
     context('project not initialized', () => {
       it('returns an error', done => {
@@ -152,12 +154,12 @@ describe('config/index', () => {
       })
 
       it('adds url to existing item and sets new action', done => {
-        let opts = { port: "5000", action: "get" }
+        let opts = { port: '5000', action: 'get' }
 
         config.addEndpoint(url, opts, err => {
           assert.notOk(err)
 
-          opts = { port: "5000", action: "put" }
+          opts = { port: '5000', action: 'put' }
           config.addEndpoint(url + '/more', opts, err => {
             assert.notOk(err)
 
@@ -183,7 +185,7 @@ describe('config/index', () => {
       })
 
       it('will not add the same endpoint to the same port/action item', done => {
-        let opts = { port: "5000", action: "get" }
+        let opts = { port: '5000', action: 'get' }
 
         config.addEndpoint(url, opts, err => {
           assert.notOk(err)
@@ -211,7 +213,7 @@ describe('config/index', () => {
       })
 
       it('creates a new config item if port not present', done => {
-        let opts = { port: "1234", action: "post" }
+        let opts = { port: '1234', action: 'post' }
 
         config.addEndpoint(url, opts, err => {
           assert.notOk(err)
@@ -221,13 +223,13 @@ describe('config/index', () => {
 
             assert.equal(Object.keys(configData.endpoints).length, 2)
 
-            assert.isObject(configData.endpoints["5000"])
-            assert.equal(configData.endpoints["5000"].get.length, 0)
+            assert.isObject(configData.endpoints['5000'])
+            assert.equal(configData.endpoints['5000'].get.length, 0)
 
-            assert.isObject(configData.endpoints["1234"])
-            assert.equal(configData.endpoints["1234"].post.length, 1)
+            assert.isObject(configData.endpoints['1234'])
+            assert.equal(configData.endpoints['1234'].post.length, 1)
             assert.include(
-              configData.endpoints["1234"][opts.action][0],
+              configData.endpoints['1234'][opts.action][0],
               utils.cleanUrl(url)
             )
 
@@ -237,7 +239,7 @@ describe('config/index', () => {
       })
 
       it('uses default port if port option not supplied', done => {
-        let opts = { action: "post" }
+        let opts = { action: 'post' }
 
         config.addEndpoint(url, opts, err => {
           assert.notOk(err)
@@ -247,9 +249,9 @@ describe('config/index', () => {
 
             assert.equal(Object.keys(configData.endpoints).length, 1)
 
-            assert.isObject(configData.endpoints["5000"])
-            assert.equal(configData.endpoints["5000"].get.length, 0)
-            assert.equal(configData.endpoints["5000"].post.length, 1)
+            assert.isObject(configData.endpoints['5000'])
+            assert.equal(configData.endpoints['5000'].get.length, 0)
+            assert.equal(configData.endpoints['5000'].post.length, 1)
 
             done()
           })
@@ -265,8 +267,8 @@ describe('config/index', () => {
 
             assert.equal(Object.keys(configData.endpoints).length, 1)
 
-            assert.isObject(configData.endpoints["5000"])
-            assert.equal(configData.endpoints["5000"].get.length, 1)
+            assert.isObject(configData.endpoints['5000'])
+            assert.equal(configData.endpoints['5000'].get.length, 1)
 
             done()
           })
@@ -279,8 +281,8 @@ describe('config/index', () => {
 
           assert.deepEqual(info, {
             url: utils.cleanUrl(url),
-            port: "5000",
-            action: "get"
+            port: '5000',
+            action: 'get'
           })
 
           const opts = {port: '1234', action: 'post'}
@@ -289,8 +291,8 @@ describe('config/index', () => {
 
             assert.deepEqual(info, {
               url: utils.cleanUrl(url + '/other'),
-              port: "1234",
-              action: "post"
+              port: '1234',
+              action: 'post'
             })
 
             done()
@@ -316,7 +318,7 @@ describe('config/index', () => {
       beforeEach(project.init)
 
       it('returns error if no endpoint found for given port', done => {
-        config.removeEndpoint(url, {port: "1234"}, err => {
+        config.removeEndpoint(url, {port: '1234'}, err => {
           assert.isObject(err)
           done()
         })
@@ -330,16 +332,16 @@ describe('config/index', () => {
 
             config.read((err, configData) => {
               assert.notOk(err)
-              assert.equal(configData.endpoints["5000"].get.length, 2)
+              assert.equal(configData.endpoints['5000'].get.length, 2)
 
               config.removeEndpoint(url, null, err => {
                 assert.notOk(err)
 
                 config.read((err, configData) => {
                   assert.notOk(err)
-                  assert.equal(configData.endpoints["5000"].get.length, 1)
+                  assert.equal(configData.endpoints['5000'].get.length, 1)
                   assert.equal(
-                    configData.endpoints["5000"].get[0],
+                    configData.endpoints['5000'].get[0],
                     utils.cleanUrl(url + '/other')
                   )
                   done()
@@ -365,10 +367,10 @@ describe('config/index', () => {
 
               config.read((err, configData) => {
                 assert.notOk(err)
-                assert.isObject(configData.endpoints["5000"])
-                assert.equal(configData.endpoints["5000"].get.length, 1)
-                assert.isObject(configData.endpoints["1234"])
-                assert.equal(configData.endpoints["1234"].post.length, 2)
+                assert.isObject(configData.endpoints['5000'])
+                assert.equal(configData.endpoints['5000'].get.length, 1)
+                assert.isObject(configData.endpoints['1234'])
+                assert.equal(configData.endpoints['1234'].post.length, 2)
 
                 config.removeEndpoint(url, opts, err => {
                   assert.notOk(err)
@@ -376,8 +378,8 @@ describe('config/index', () => {
                   config.read((err, configData) => {
                     assert.notOk(err)
 
-                    assert.equal(configData.endpoints["5000"].get.length, 1)
-                    assert.equal(configData.endpoints["1234"].post.length, 1)
+                    assert.equal(configData.endpoints['5000'].get.length, 1)
+                    assert.equal(configData.endpoints['1234'].post.length, 1)
 
                     done()
                   })
@@ -413,7 +415,7 @@ describe('config/index', () => {
   describe('setDefaultPort', () => {
     context('project is not initialized', () => {
       it('returns an error', done => {
-        config.setDefaultPort("1234", (err, port) => {
+        config.setDefaultPort('1234', (err, port) => {
           assert.isObject(err)
           assert.notOk(port)
           done()
@@ -425,13 +427,13 @@ describe('config/index', () => {
       beforeEach(project.init)
 
       it('unsets current default and sets new default', done => {
-        config.setDefaultPort("1234", err => {
+        config.setDefaultPort('1234', err => {
           assert.notOk(err)
 
           config.read((err, configData) => {
             assert.isNull(err)
-            assert.isTrue(configData.endpoints["1234"].default)
-            assert.isUndefined(configData.endpoints["5000"].default)
+            assert.isTrue(configData.endpoints['1234'].default)
+            assert.isUndefined(configData.endpoints['5000'].default)
 
             done()
           })
@@ -439,12 +441,12 @@ describe('config/index', () => {
       })
 
       it('returns an error for an invalid port', done => {
-        config.setDefaultPort("abcd", err => {
+        config.setDefaultPort('abcd', err => {
           assert.isObject(err)
 
           config.read((err, configData) => {
             assert.isNull(err)
-            assert.isTrue(configData.endpoints["5000"].default)
+            assert.isTrue(configData.endpoints['5000'].default)
             assert.isUndefined(configData.endpoints.abcd)
 
             done()
@@ -471,7 +473,7 @@ describe('config/index', () => {
       it('returns the default port', done => {
         config.getDefaultPort((err, port) => {
           assert.isNull(err)
-          assert.equal(port, "5000")
+          assert.equal(port, '5000')
           done()
         })
       })
@@ -479,5 +481,108 @@ describe('config/index', () => {
 
   })
 
+  describe('setBase', () => {
+    context('project is not initialized', () => {
+      it('returns an error', done => {
+        config.getDefaultPort((err, port) => {
+          assert.isObject(err)
+          assert.notOk(port)
+          done()
+        })
+      })
+    })
+
+    context('project is initialized', () => {
+      beforeEach(project.init)
+
+      it('sets a base on a given port', done => {
+        config.setBase('test.com', '5001', function (err) {
+          assert.notOk(err)
+
+          config.read(function (err, data) {
+            assert.notOk(err)
+            assert.equal(data.endpoints['5001'].base, 'test.com')
+            done()
+          })
+        })
+      })
+
+      it('sets the default port if port not given', done => {
+        config.setBase('test.com', null, function (err) {
+          assert.notOk(err)
+
+          config.read(function (err, data) {
+            assert.notOk(err)
+            assert.equal(data.endpoints['5000'].base, 'test.com')
+            done()
+          })
+        })
+      })
+    })
+  })
+
+  describe('getBase', () => {
+    context('project is not initialized', () => {
+      it('returns an error', done => {
+        config.getDefaultPort((err, port) => {
+          assert.isObject(err)
+          assert.notOk(port)
+          done()
+        })
+      })
+    })
+
+    context('project is initialized', () => {
+      beforeEach(project.init)
+
+      it('sets a base on a given port', done => {
+        config.setBase('test.com', '5001', function (err) {
+          assert.notOk(err)
+
+          config.getBase('5001', function (err, base) {
+            assert.notOk(err)
+            assert.equal(base, 'test.com')
+            done()
+          })
+        })
+      })
+
+      it('gets the default port if port not given', done => {
+        config.setBase('test.com', null, function (err) {
+          assert.notOk(err)
+
+          config.getBase(null, function (err, base) {
+            assert.notOk(err)
+            assert.equal(base, 'test.com')
+            done()
+          })
+        })
+      })
+    })
+  })
+
+  describe('listBases', () => {
+    beforeEach(project.init)
+
+    it('returns a list of bases with ports', done => {
+      config.setBase('test5000.com', null, function (err) {
+        assert.notOk(err)
+
+        config.setBase('test5001.com', '5001', function (err) {
+          assert.notOk(err)
+
+          config.listBases(function (err, bases) {
+            assert.notOk(err)
+            assert.deepEqual(bases, [
+              {port: '5000', base: 'test5000.com'},
+              {port: '5001', base: 'test5001.com'}
+            ])
+
+            done()
+          })
+        })
+      })
+    })
+  })
 
 })
