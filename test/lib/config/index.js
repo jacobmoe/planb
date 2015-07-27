@@ -496,7 +496,7 @@ describe('config/index', () => {
       beforeEach(project.init)
 
       it('sets a base on a given port', done => {
-        config.setBase('test.com', '5001', function (err) {
+        config.setBase('5001', 'test.com', function (err) {
           assert.notOk(err)
 
           config.read(function (err, data) {
@@ -508,7 +508,7 @@ describe('config/index', () => {
       })
 
       it('sets the default port if port not given', done => {
-        config.setBase('test.com', null, function (err) {
+        config.setBase(null, 'test.com', function (err) {
           assert.notOk(err)
 
           config.read(function (err, data) {
@@ -536,7 +536,7 @@ describe('config/index', () => {
       beforeEach(project.init)
 
       it('sets a base on a given port', done => {
-        config.setBase('test.com', '5001', function (err) {
+        config.setBase('5001', 'test.com', function (err) {
           assert.notOk(err)
 
           config.getBase('5001', function (err, base) {
@@ -548,7 +548,7 @@ describe('config/index', () => {
       })
 
       it('gets the default port if port not given', done => {
-        config.setBase('test.com', null, function (err) {
+        config.setBase(null, 'test.com', function (err) {
           assert.notOk(err)
 
           config.getBase(null, function (err, base) {
@@ -565,10 +565,10 @@ describe('config/index', () => {
     beforeEach(project.init)
 
     it('returns a list of bases with ports', done => {
-      config.setBase('test5000.com', null, function (err) {
+      config.setBase(null, 'test5000.com', function (err) {
         assert.notOk(err)
 
-        config.setBase('test5001.com', '5001', function (err) {
+        config.setBase('5001', 'test5001.com', function (err) {
           assert.notOk(err)
 
           config.listBases(function (err, bases) {

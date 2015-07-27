@@ -41,6 +41,11 @@ program
   .action(manager.remove)
 
 program
+  .command('base [port] [baseUrl]')
+  .description('Get or set the base for a port-endpoint collection')
+  .action(manager.base)
+
+program
   .command('diff [endpoint] [v1] [v2]')
   .description('Diff versions. With no version numbers, \n' +
                'diffs the current version with the previous')

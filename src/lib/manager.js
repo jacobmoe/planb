@@ -137,6 +137,50 @@ export default {
         }
       }
     })
+  },
+
+  base: function (port, baseUrl, opts) {
+    if (!port) {
+      project.listBases(function (err, result) {
+        if (err) {
+          console.log('Problem getting bases.', err.message)
+        } else {
+          result = result || []
+
+          const table = new AsciiTable()
+          table.setHeading('port', 'base url')
+
+          result.forEach(item => {
+            table.addRow(item.port || 'not set', item.base || 'not set')
+          })
+
+          console.log('use: [planb base port-num base-url] to set base url')
+          console.log(table.toString())
+        }
+      })
+
+      return
+    }
+
+    if (!baseUrl) {
+      project.getBase(port, function (err, result) {
+        if (err) {
+          console.log('Problem getting base.', err.message)
+        } else {
+          console.log(result || 'not set')
+        }
+      })
+
+      return
+    }
+
+    project.setBase(port, baseUrl, function (err) {
+      if (err) {
+        console.log('Problem setting base.', err.message)
+      } else {
+        console.log('Base set for port', port)
+      }
+    })
   }
 }
 

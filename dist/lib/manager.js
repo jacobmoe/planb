@@ -152,6 +152,52 @@ exports['default'] = {
         }
       }
     });
+  },
+
+  base: function base(port, baseUrl, opts) {
+    if (!port) {
+      _project2['default'].listBases(function (err, result) {
+        if (err) {
+          console.log('Problem getting bases.', err.message);
+        } else {
+          (function () {
+            result = result || [];
+
+            var table = new _asciiTable2['default']();
+            table.setHeading('port', 'base url');
+
+            result.forEach(function (item) {
+              table.addRow(item.port || 'not set', item.base || 'not set');
+            });
+
+            console.log('use: [planb base port-num base-url] to set base url');
+            console.log(table.toString());
+          })();
+        }
+      });
+
+      return;
+    }
+
+    if (!baseUrl) {
+      _project2['default'].getBase(port, function (err, result) {
+        if (err) {
+          console.log('Problem getting base.', err.message);
+        } else {
+          console.log(result || 'not set');
+        }
+      });
+
+      return;
+    }
+
+    _project2['default'].setBase(port, baseUrl, function (err) {
+      if (err) {
+        console.log('Problem setting base.', err.message);
+      } else {
+        console.log('Base set for port', port);
+      }
+    });
   }
 };
 

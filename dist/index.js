@@ -35,6 +35,8 @@ _commander2['default'].command('rollback [endpoint]').description('Rollback the 
 
 _commander2['default'].command('remove [endpoint]').description('Remove the endpoint and all its versions').action(_libManager2['default'].remove);
 
+_commander2['default'].command('base [port] [baseUrl]').description('Get or set the base for a port-endpoint collection').action(_libManager2['default'].base);
+
 _commander2['default'].command('diff [endpoint] [v1] [v2]').description('Diff versions. With no version numbers, \n' + 'diffs the current version with the previous').action(_libManager2['default'].diff);
 
 _commander2['default'].command('serve').description('Serve local versions').action(_libServer2['default']);

@@ -350,7 +350,7 @@ exports['default'] = function (projectPath) {
   /*
    * Sets a base URL for a port (or default)
    */
-  function setBase(base, port, cb) {
+  function setBase(port, base, cb) {
     read(function (err, configData) {
       if (err) {
         cb(err);return;

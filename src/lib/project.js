@@ -267,6 +267,30 @@ function getVersionDiffs (versions, v1, v2, cb) {
   })
 }
 
+function getBase (port, cb) {
+  buildConfigStorage((config, storage) => {
+    config.getBase(port, cb)
+  }, cb)
+}
+
+function setBase (port, baseUrl, cb) {
+  buildConfigStorage((config, storage) => {
+    if (port === '-') {
+      config.setBase(null, baseUrl, cb)
+    } else if (port && isNaN(port)) {
+      cb({message: 'port must be a number'})
+    } else {
+      config.setBase(port, baseUrl, cb)
+    }
+  }, cb)
+}
+
+function listBases (cb) {
+  buildConfigStorage((config, storage) => {
+    config.listBases(cb)
+  }, cb)
+}
+
 /*
  * Convenience method to get rootPath and build config
  * and storage instances
@@ -338,5 +362,8 @@ export default {
   fetchVersions: fetchVersions,
   itemize: itemize,
   rollbackVersion: rollbackVersion,
-  diff: diff
+  diff: diff,
+  setBase: setBase,
+  getBase: getBase,
+  listBases: listBases
 }
