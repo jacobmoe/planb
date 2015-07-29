@@ -113,27 +113,11 @@ function fetchVersions (callback, reqCallback, reqErrCallback) {
     ensureEndpointExistance(storage, url, opts, err => {
       if (err) { callback(err); return }
 
-      if (!url.match(/^https?:\/\/.*/)) url = `http://${url}`
-
-      request(url, (error, response, body) => {
-        if (error) { cb({url: item.url, data: error}); return }
-
-        const versions = storage.versions(item.url, opts)
-        const ext = mimeTypes.extension(response.headers['content-type'])
-
-        if (!ext) {
-          cb({url: item.url, data: {message: 'Unsupported content type'}})
-          return
-        }
-
-        if (response.statusCode != 200) {
-          cb({url: item.url, status: response.statusCode})
-          return
-        }
+      fetchVersion(url, opts, function (err, result) {
+        if (err) { cb(err); return }
 
         if (reqCallback) reqCallback(item)
-
-        versions.create(body, ext, cb)
+        cb(null, result)
       })
     })
   }, (err, res) => {
@@ -141,6 +125,31 @@ function fetchVersions (callback, reqCallback, reqErrCallback) {
   })
 
   transform(callback)
+}
+
+function fetchVersion (url, opts, cb) {
+  buildConfigStorage((config, storage) => {
+    if (!url.match(/^https?:\/\/.*/)) url = `http://${url}`
+
+    request(url, (error, response, body) => {
+      if (error) { cb({url: url, data: error}); return }
+
+      const versions = storage.versions(url, opts)
+      const ext = mimeTypes.extension(response.headers['content-type'])
+
+      if (!ext) {
+        cb({url: url, data: {message: 'Unsupported content type'}})
+        return
+      }
+
+      if (response.statusCode != 200) {
+        cb({url: url, status: response.statusCode})
+        return
+      }
+
+      versions.create(body, ext, cb)
+    })
+  })
 }
 
 function ensureEndpointExistance (storage, url, opts, cb) {
@@ -204,6 +213,18 @@ function diff (url, v1, v2, opts, cb) {
   } else {
     diffCurrentVersion(url, v1Num || v2Num, opts, cb)
   }
+}
+
+function getCurrentVersion (url, opts, cb) {
+  buildConfigStorage((config, storage) => {
+    const versions = storage.versions(url, opts)
+
+    versions.current((err, current) => {
+      if (err) { cb(err); return }
+
+      cb(null, current)
+    })
+  }, cb)
 }
 
 function diffCurrentVersion (url, versionNum, opts, cb) {
@@ -291,6 +312,12 @@ function listBases (cb) {
   }, cb)
 }
 
+function getPorts (cb) {
+  buildConfigStorage((config, storage) => {
+    config.getPorts(cb)
+  }, cb)
+}
+
 /*
  * Convenience method to get rootPath and build config
  * and storage instances
@@ -360,10 +387,13 @@ export default {
   addEndpoint: addEndpoint,
   removeEndpoint: removeEndpoint,
   fetchVersions: fetchVersions,
+  fetchVersion: fetchVersion,
   itemize: itemize,
   rollbackVersion: rollbackVersion,
   diff: diff,
   setBase: setBase,
   getBase: getBase,
-  listBases: listBases
+  listBases: listBases,
+  getCurrentVersion: getCurrentVersion,
+  getPorts: getPorts
 }

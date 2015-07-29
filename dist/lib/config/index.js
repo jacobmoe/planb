@@ -318,15 +318,14 @@ exports['default'] = function (projectPath) {
   function flattened(cb) {
     var result = [];
 
-    read(function (err, configData) {
+    getPorts(function (err, ports, configData) {
       if (err) {
-        cb({ message: 'JSON config is invalid.' });
-        return;
+        cb(err);return;
       }
 
       var endpoints = configData.endpoints || [];
 
-      Object.keys(endpoints).forEach(function (port) {
+      ports.forEach(function (port) {
         if (!_utils2['default'].validPort(port)) return;
 
         Object.keys(endpoints[port]).forEach(function (action) {
@@ -344,6 +343,19 @@ exports['default'] = function (projectPath) {
       });
 
       cb(null, result);
+    });
+  }
+
+  function getPorts(cb) {
+    read(function (err, configData) {
+      if (err) {
+        cb({ message: 'JSON config is invalid.' });
+        return;
+      }
+
+      var endpoints = configData.endpoints || [];
+
+      cb(null, Object.keys(endpoints), configData);
     });
   }
 
@@ -420,6 +432,7 @@ exports['default'] = function (projectPath) {
     flattened: flattened,
     setBase: setBase,
     getBase: getBase,
-    listBases: listBases
+    listBases: listBases,
+    getPorts: getPorts
   };
 };

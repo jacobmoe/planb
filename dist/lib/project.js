@@ -157,29 +157,13 @@ function fetchVersions(callback, reqCallback, reqErrCallback) {
         callback(err);return;
       }
 
-      if (!url.match(/^https?:\/\/.*/)) url = 'http://' + url;
-
-      (0, _request2['default'])(url, function (error, response, body) {
-        if (error) {
-          cb({ url: item.url, data: error });return;
-        }
-
-        var versions = storage.versions(item.url, opts);
-        var ext = _mimeTypes2['default'].extension(response.headers['content-type']);
-
-        if (!ext) {
-          cb({ url: item.url, data: { message: 'Unsupported content type' } });
-          return;
-        }
-
-        if (response.statusCode != 200) {
-          cb({ url: item.url, status: response.statusCode });
-          return;
+      fetchVersion(url, opts, function (err, result) {
+        if (err) {
+          cb(err);return;
         }
 
         if (reqCallback) reqCallback(item);
-
-        versions.create(body, ext, cb);
+        cb(null, result);
       });
     });
   }, function (err, res) {
@@ -187,6 +171,33 @@ function fetchVersions(callback, reqCallback, reqErrCallback) {
   });
 
   transform(callback);
+}
+
+function fetchVersion(url, opts, cb) {
+  buildConfigStorage(function (config, storage) {
+    if (!url.match(/^https?:\/\/.*/)) url = 'http://' + url;
+
+    (0, _request2['default'])(url, function (error, response, body) {
+      if (error) {
+        cb({ url: url, data: error });return;
+      }
+
+      var versions = storage.versions(url, opts);
+      var ext = _mimeTypes2['default'].extension(response.headers['content-type']);
+
+      if (!ext) {
+        cb({ url: url, data: { message: 'Unsupported content type' } });
+        return;
+      }
+
+      if (response.statusCode != 200) {
+        cb({ url: url, status: response.statusCode });
+        return;
+      }
+
+      versions.create(body, ext, cb);
+    });
+  });
 }
 
 function ensureEndpointExistance(storage, url, opts, cb) {
@@ -255,6 +266,20 @@ function diff(url, v1, v2, opts, cb) {
   } else {
     diffCurrentVersion(url, v1Num || v2Num, opts, cb);
   }
+}
+
+function getCurrentVersion(url, opts, cb) {
+  buildConfigStorage(function (config, storage) {
+    var versions = storage.versions(url, opts);
+
+    versions.current(function (err, current) {
+      if (err) {
+        cb(err);return;
+      }
+
+      cb(null, current);
+    });
+  }, cb);
 }
 
 function diffCurrentVersion(url, versionNum, opts, cb) {
@@ -348,6 +373,12 @@ function listBases(cb) {
   }, cb);
 }
 
+function getPorts(cb) {
+  buildConfigStorage(function (config, storage) {
+    config.getPorts(cb);
+  }, cb);
+}
+
 /*
  * Convenience method to get rootPath and build config
  * and storage instances
@@ -419,11 +450,14 @@ exports['default'] = {
   addEndpoint: addEndpoint,
   removeEndpoint: removeEndpoint,
   fetchVersions: fetchVersions,
+  fetchVersion: fetchVersion,
   itemize: itemize,
   rollbackVersion: rollbackVersion,
   diff: diff,
   setBase: setBase,
   getBase: getBase,
-  listBases: listBases
+  listBases: listBases,
+  getCurrentVersion: getCurrentVersion,
+  getPorts: getPorts
 };
 module.exports = exports['default'];

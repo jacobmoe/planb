@@ -287,15 +287,12 @@ export default function (projectPath) {
   function flattened (cb) {
     let result = []
 
-    read((err, configData) => {
-      if (err) {
-        cb({message: 'JSON config is invalid.'})
-        return
-      }
+    getPorts((err, ports, configData) => {
+      if (err) { cb(err); return }
 
       const endpoints = configData.endpoints || []
 
-      Object.keys(endpoints).forEach(port => {
+      ports.forEach(port => {
         if (!utils.validPort(port)) return
 
         Object.keys(endpoints[port]).forEach(action => {
@@ -313,6 +310,19 @@ export default function (projectPath) {
       })
 
       cb(null, result)
+    })
+  }
+
+  function getPorts (cb) {
+    read((err, configData) => {
+      if (err) {
+        cb({message: 'JSON config is invalid.'})
+        return
+      }
+
+      const endpoints = configData.endpoints || []
+
+      cb(null, Object.keys(endpoints), configData)
     })
   }
 
@@ -383,7 +393,8 @@ export default function (projectPath) {
     flattened: flattened,
     setBase: setBase,
     getBase: getBase,
-    listBases: listBases
+    listBases: listBases,
+    getPorts: getPorts
   }
 
 }
